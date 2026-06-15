@@ -131,6 +131,12 @@ function bindEvents() {
   els.closeGuide.addEventListener("click", closeGuideModal);
   els.closeGuideIcon.addEventListener("click", closeGuideModal);
   els.guideModal.addEventListener("click", (event) => {
+    const copyButton = event.target instanceof Element ? event.target.closest("[data-copy-url]") : null;
+    if (copyButton instanceof HTMLButtonElement) {
+      copyGuideUrl(copyButton);
+      return;
+    }
+
     if (event.target === els.guideModal) {
       closeGuideModal();
     }
@@ -191,6 +197,28 @@ function closeGuideModal() {
   els.guideModal.hidden = true;
   document.body.classList.remove("modal-open");
   els.openGuide.focus();
+}
+
+async function copyGuideUrl(button) {
+  const url = button.dataset.copyUrl;
+  if (!url) {
+    return;
+  }
+
+  const originalText = button.textContent;
+  try {
+    await navigator.clipboard.writeText(url);
+    button.textContent = "コピー済み";
+    setStatus(`${url} をコピーしました。Chromeのアドレスバーに貼り付けて開いてください。`);
+  } catch (error) {
+    console.error(error);
+    button.textContent = "コピー失敗";
+    setStatus("コピーできませんでした。表示されているURLをChromeのアドレスバーに入力してください。", true);
+  }
+
+  window.setTimeout(() => {
+    button.textContent = originalText;
+  }, 1600);
 }
 
 function handleExtensionMessage(event) {

@@ -442,6 +442,12 @@ body.modal-open {
   padding-left: 0.1rem;
 }
 
+.guide-url {
+  color: var(--text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.88rem;
+}
+
 .guide-steps > li {
   padding-left: 0.25rem;
 }
@@ -470,6 +476,22 @@ body.modal-open {
 
 .guide-link:hover {
   color: #ffffff;
+}
+
+.copy-url-button {
+  min-height: 1.9rem;
+  margin-top: 0.35rem;
+  padding: 0 0.6rem;
+  border: 1px solid rgba(0, 209, 189, 0.45);
+  border-radius: 6px;
+  color: var(--accent-strong);
+  background: rgba(0, 209, 189, 0.08);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.copy-url-button:hover {
+  background: rgba(0, 209, 189, 0.14);
 }
 
 .guide-note {
