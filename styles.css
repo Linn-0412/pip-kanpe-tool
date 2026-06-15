@@ -431,12 +431,24 @@ body.modal-open {
   padding: 1rem 1rem 0.25rem 2.5rem;
 }
 
-.guide-steps li {
+.guide-substeps {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.guide-substeps li {
+  padding-left: 0.1rem;
+}
+
+.guide-steps > li {
   padding-left: 0.25rem;
 }
 
 .guide-steps strong,
-.guide-steps span {
+.guide-steps span,
+.guide-steps small {
   display: block;
 }
 
@@ -458,6 +470,13 @@ body.modal-open {
 
 .guide-link:hover {
   color: #ffffff;
+}
+
+.guide-note {
+  margin-top: 0.45rem;
+  color: #ffd166;
+  font-size: 0.82rem;
+  line-height: 1.6;
 }
 
 .guide-check {
