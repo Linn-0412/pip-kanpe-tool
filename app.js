@@ -14,6 +14,7 @@ const state = {
     fitMode: "contain",
     pipSize: "640x360",
     optimizeImages: true,
+    hideGuideOnLaunch: false,
   },
 };
 
@@ -43,6 +44,7 @@ async function init() {
 function bindElements() {
   const ids = [
     "support-badge",
+    "open-guide",
     "open-pip",
     "drop-zone",
     "file-input",
@@ -60,6 +62,10 @@ function bindElements() {
     "fit-mode",
     "pip-size",
     "status-line",
+    "guide-modal",
+    "close-guide",
+    "close-guide-icon",
+    "hide-guide-next-time",
   ];
 
   ids.forEach((id) => {
@@ -114,7 +120,15 @@ function bindEvents() {
   els.prevMain.addEventListener("click", previousCard);
   els.nextMain.addEventListener("click", nextCard);
   els.openPip.addEventListener("click", openPip);
+  els.openGuide.addEventListener("click", showGuideModal);
   els.clearAll.addEventListener("click", clearAllCards);
+  els.closeGuide.addEventListener("click", closeGuideModal);
+  els.closeGuideIcon.addEventListener("click", closeGuideModal);
+  els.guideModal.addEventListener("click", (event) => {
+    if (event.target === els.guideModal) {
+      closeGuideModal();
+    }
+  });
 
   els.fitMode.addEventListener("change", () => {
     state.settings.fitMode = els.fitMode.value;
@@ -134,7 +148,16 @@ function bindEvents() {
   });
 
   window.addEventListener("keydown", (event) => {
-    if (event.target.matches("input, select, button, textarea")) {
+    if (!els.guideModal.hidden && event.key === "Escape") {
+      closeGuideModal();
+      return;
+    }
+
+    if (!els.guideModal.hidden) {
+      return;
+    }
+
+    if (event.target instanceof Element && event.target.matches("input, select, button, textarea")) {
       return;
     }
 
@@ -147,6 +170,21 @@ function bindEvents() {
   });
 
   window.addEventListener("beforeunload", revokeAllObjectUrls);
+}
+
+function showGuideModal() {
+  els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
+  els.guideModal.hidden = false;
+  document.body.classList.add("modal-open");
+  els.closeGuide.focus();
+}
+
+function closeGuideModal() {
+  state.settings.hideGuideOnLaunch = els.hideGuideNextTime.checked;
+  saveSettings();
+  els.guideModal.hidden = true;
+  document.body.classList.remove("modal-open");
+  els.openGuide.focus();
 }
 
 function updateSupportBadge() {
@@ -692,6 +730,11 @@ function applySettingsToControls() {
   els.fitMode.value = state.settings.fitMode;
   els.pipSize.value = state.settings.pipSize;
   els.optimizeImages.checked = state.settings.optimizeImages;
+  els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
+
+  if (!state.settings.hideGuideOnLaunch) {
+    requestAnimationFrame(showGuideModal);
+  }
 }
 
 function setStatus(message, isError = false) {

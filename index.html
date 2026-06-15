@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
-    <link rel="stylesheet" href="./styles.css">
-    <script src="./app.js?v=1.0.2" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=1.1.0">
+    <script src="./app.js?v=1.1.0" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -16,6 +16,7 @@
       </div>
       <div class="header-actions">
         <span id="support-badge" class="support-badge">確認中</span>
+        <button id="open-guide" class="secondary-button" type="button">使い方</button>
         <button id="open-pip" class="primary-button" type="button">PiPで表示</button>
       </div>
     </header>
@@ -89,5 +90,45 @@
         <p id="status-line" class="status-line" role="status"></p>
       </section>
     </main>
+
+    <div id="guide-modal" class="guide-backdrop" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
+      <section class="guide-dialog">
+        <div class="guide-header">
+          <div>
+            <p class="eyebrow">Quick guide</p>
+            <h2 id="guide-title">使い方ガイド</h2>
+          </div>
+          <button id="close-guide-icon" class="mini-button" type="button" aria-label="使い方ガイドを閉じる">×</button>
+        </div>
+
+        <ol class="guide-steps">
+          <li>
+            <strong>画像を登録</strong>
+            <span>カンペ画像を複数選択、または画像追加エリアへドロップします。最大40枚まで登録できます。</span>
+          </li>
+          <li>
+            <strong>順番を整える</strong>
+            <span>登録画像リストの ↑ / ↓ で攻略順に並び替えます。不要な画像は × で削除できます。</span>
+          </li>
+          <li>
+            <strong>PiPで表示</strong>
+            <span>ChromeまたはEdgeで「PiPで表示」を押すと、小窓に現在のカンペを表示します。</span>
+          </li>
+          <li>
+            <strong>ゲーム中に切り替える</strong>
+            <span>PiP小窓の ← / → で前後のカンペへ切り替えます。FF14はボーダーレスウィンドウ表示推奨です。</span>
+          </li>
+        </ol>
+
+        <label class="check-option guide-check">
+          <input id="hide-guide-next-time" type="checkbox">
+          <span>次回以降表示しない</span>
+        </label>
+
+        <div class="guide-actions">
+          <button id="close-guide" class="primary-button" type="button">はじめる</button>
+        </div>
+      </section>
+    </div>
   </body>
 </html>
