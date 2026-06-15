@@ -3,6 +3,10 @@ const DB_NAME = "pip-kanpe-tool";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
 const SETTINGS_KEY = "pip-kanpe-settings";
+const fileNameCollator = new Intl.Collator("ja", {
+  numeric: true,
+  sensitivity: "base",
+});
 
 const state = {
   db: null,
@@ -266,7 +270,9 @@ async function addFiles(fileList) {
     return;
   }
 
-  const imageFiles = Array.from(fileList).filter((file) => file.type.startsWith("image/"));
+  const imageFiles = Array.from(fileList)
+    .filter((file) => file.type.startsWith("image/"))
+    .sort(compareFilesByName);
   if (imageFiles.length === 0) {
     setStatus("画像ファイルを選択してください。", true);
     return;
@@ -282,7 +288,7 @@ async function addFiles(fileList) {
   if (accepted.length < imageFiles.length) {
     setStatus(`上限のため${accepted.length}枚だけ追加します。`, true);
   } else {
-    setStatus(`${accepted.length}枚を追加中...`);
+    setStatus(`${accepted.length}枚をファイル名順で追加中...`);
   }
 
   const baseOrder = state.cards.length > 0 ? Math.max(...state.cards.map((card) => card.order)) + 1 : 0;
@@ -312,6 +318,14 @@ async function addFiles(fileList) {
   state.currentIndex = Math.max(0, state.cards.length - accepted.length);
   render();
   setStatus(`${accepted.length}枚追加しました。`);
+}
+
+function compareFilesByName(a, b) {
+  const byName = fileNameCollator.compare(a.name, b.name);
+  if (byName !== 0) {
+    return byName;
+  }
+  return a.lastModified - b.lastModified;
 }
 
 function optimizeImage(file) {
@@ -732,7 +746,8 @@ function applySettingsToControls() {
   els.optimizeImages.checked = state.settings.optimizeImages;
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
 
-  if (!state.settings.hideGuideOnLaunch) {
+  const guideForced = new URLSearchParams(window.location.search).get("guide") === "1";
+  if (guideForced || !state.settings.hideGuideOnLaunch) {
     requestAnimationFrame(showGuideModal);
   }
 }
