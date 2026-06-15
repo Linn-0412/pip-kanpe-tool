@@ -68,7 +68,10 @@ function bindElements() {
 }
 
 function bindEvents() {
-  els.pickFiles.addEventListener("click", () => els.fileInput.click());
+  els.pickFiles.addEventListener("click", (event) => {
+    event.stopPropagation();
+    els.fileInput.click();
+  });
   els.dropZone.addEventListener("click", () => els.fileInput.click());
   els.dropZone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
