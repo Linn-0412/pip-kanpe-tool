@@ -103,6 +103,8 @@ function bindEvents() {
     els.fileInput.value = "";
   });
 
+  window.addEventListener("message", handleExtensionMessage);
+
   ["dragenter", "dragover"].forEach((name) => {
     els.dropZone.addEventListener(name, (event) => {
       event.preventDefault();
@@ -189,6 +191,27 @@ function closeGuideModal() {
   els.guideModal.hidden = true;
   document.body.classList.remove("modal-open");
   els.openGuide.focus();
+}
+
+function handleExtensionMessage(event) {
+  if (event.source !== window || event.origin !== window.location.origin) {
+    return;
+  }
+
+  const data = event.data;
+  if (!data || data.source !== "pip-kanpe-hotkeys" || data.type !== "command") {
+    return;
+  }
+
+  if (data.command === "next") {
+    nextCard();
+    setStatus("拡張機能ショートカット: 次のカンペへ");
+  }
+
+  if (data.command === "previous") {
+    previousCard();
+    setStatus("拡張機能ショートカット: 前のカンペへ");
+  }
 }
 
 function updateSupportBadge() {

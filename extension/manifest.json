@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "PiP カンペツール Hotkeys",
+  "description": "PiPカンペツールをグローバルショートカットで操作します。",
+  "version": "1.0.0",
+  "action": {
+    "default_title": "PiP カンペツール Hotkeys"
+  },
+  "permissions": ["scripting", "tabs"],
+  "host_permissions": ["https://linn-0412.github.io/pip-kanpe-tool/*"],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://linn-0412.github.io/pip-kanpe-tool/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "previous-card": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+8"
+      },
+      "description": "前のカンペへ",
+      "global": true
+    },
+    "next-card": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+9"
+      },
+      "description": "次のカンペへ",
+      "global": true
+    }
+  }
+}
