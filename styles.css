@@ -449,6 +449,17 @@ body.modal-open {
   line-height: 1.65;
 }
 
+.guide-link {
+  color: var(--accent-strong);
+  font-weight: 800;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+
+.guide-link:hover {
+  color: #ffffff;
+}
+
 .guide-check {
   margin: 1rem;
   padding: 0.85rem;
