@@ -6,15 +6,34 @@ if (!globalThis.__pipKanpeHotkeysInstalled) {
       return false;
     }
 
-    window.postMessage(
-      {
-        source: "pip-kanpe-hotkeys",
-        type: "command",
-        command: message.command,
-      },
-      window.location.origin,
-    );
-    sendResponse({ ok: true });
+    sendResponse(runCommand(message.command));
     return false;
   });
+}
+
+function runCommand(command) {
+  const buttonId = {
+    previous: "prev-main",
+    next: "next-main",
+  }[command];
+
+  const button = buttonId ? document.getElementById(buttonId) : null;
+  if (button instanceof HTMLButtonElement) {
+    if (button.disabled) {
+      return { ok: false, reason: "button-disabled" };
+    }
+
+    button.click();
+    return { ok: true, via: "button-click" };
+  }
+
+  window.postMessage(
+    {
+      source: "pip-kanpe-hotkeys",
+      type: "command",
+      command,
+    },
+    window.location.origin,
+  );
+  return { ok: true, via: "window-message" };
 }

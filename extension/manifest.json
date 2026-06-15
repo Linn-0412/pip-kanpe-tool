@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PiP カンペツール Hotkeys",
   "description": "PiPカンペツールをグローバルショートカットで操作します。",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "action": {
     "default_title": "PiP カンペツール Hotkeys"
   },
