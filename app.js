@@ -554,7 +554,7 @@ async function openPip() {
 
     buildPipDocument();
     updatePip();
-    setStatus("PiPを開きました。ゲーム側はボーダーレスウィンドウ推奨です。");
+    setStatus("PiPを開きました。FF14は仮想フルスクリーンまたはウィンドウモードで表示できます。");
   } catch (error) {
     console.error(error);
     setStatus("PiPを開けませんでした。ボタン操作からもう一度試してください。", true);
