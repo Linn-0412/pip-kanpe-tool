@@ -9,8 +9,10 @@ const fileNameCollator = new Intl.Collator("ja", {
 });
 const PIP_CONTROL_SIZE_CLASSES = ["small", "medium", "large"];
 const PIP_CONTROL_POSITION_CLASSES = ["top", "bottom"];
+const PIP_CONTROL_BACKGROUND_CLASSES = ["background-solid", "background-translucent", "background-clear"];
 const DEFAULT_PIP_CONTROL_SIZE = "medium";
 const DEFAULT_PIP_CONTROL_POSITION = "bottom";
+const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
 
 const state = {
   db: null,
@@ -23,6 +25,7 @@ const state = {
     pipSize: "640x360",
     pipControlsSize: DEFAULT_PIP_CONTROL_SIZE,
     pipControlsPosition: DEFAULT_PIP_CONTROL_POSITION,
+    pipControlsBackground: DEFAULT_PIP_CONTROL_BACKGROUND,
     pipControlsSeparateFromImage: true,
     showFileExtension: false,
     optimizeImages: true,
@@ -79,6 +82,9 @@ function bindElements() {
     "pip-controls-size-large",
     "pip-controls-position-top",
     "pip-controls-position-bottom",
+    "pip-controls-background-solid",
+    "pip-controls-background-translucent",
+    "pip-controls-background-clear",
     "pip-controls-separate",
     "show-file-extension",
     "status-line",
@@ -195,6 +201,21 @@ function bindEvents() {
       updatePip();
     });
   });
+
+  [els.pipControlsBackgroundSolid, els.pipControlsBackgroundTranslucent, els.pipControlsBackgroundClear].forEach(
+    (radio) => {
+      radio.addEventListener("change", () => {
+        if (!radio.checked) {
+          return;
+        }
+
+        state.settings.pipControlsBackground = radio.value;
+        saveSettings();
+        updatePreview();
+        updatePip();
+      });
+    },
+  );
 
   els.pipControlsSeparate.addEventListener("change", () => {
     state.settings.pipControlsSeparateFromImage = els.pipControlsSeparate.checked;
@@ -727,8 +748,12 @@ function updatePip() {
 }
 
 function applyPipControlClasses(controls) {
-  controls.classList.remove(...PIP_CONTROL_SIZE_CLASSES, ...PIP_CONTROL_POSITION_CLASSES);
-  controls.classList.add(getPipControlsSize(), getPipControlsPosition());
+  controls.classList.remove(
+    ...PIP_CONTROL_SIZE_CLASSES,
+    ...PIP_CONTROL_POSITION_CLASSES,
+    ...PIP_CONTROL_BACKGROUND_CLASSES,
+  );
+  controls.classList.add(getPipControlsSize(), getPipControlsPosition(), getPipControlsBackground());
   controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
 }
 
@@ -742,6 +767,11 @@ function getPipControlsPosition() {
   return PIP_CONTROL_POSITION_CLASSES.includes(state.settings.pipControlsPosition)
     ? state.settings.pipControlsPosition
     : DEFAULT_PIP_CONTROL_POSITION;
+}
+
+function getPipControlsBackground() {
+  const className = `background-${state.settings.pipControlsBackground}`;
+  return PIP_CONTROL_BACKGROUND_CLASSES.includes(className) ? className : `background-${DEFAULT_PIP_CONTROL_BACKGROUND}`;
 }
 
 function formatPipLabel(card) {
@@ -895,11 +925,15 @@ function applySettingsToControls() {
   els.pipSize.value = state.settings.pipSize;
   const pipControlsSize = getPipControlsSize();
   const pipControlsPosition = getPipControlsPosition();
+  const pipControlsBackground = getPipControlsBackground();
   els.pipControlsSizeSmall.checked = pipControlsSize === "small";
   els.pipControlsSizeMedium.checked = pipControlsSize === "medium";
   els.pipControlsSizeLarge.checked = pipControlsSize === "large";
   els.pipControlsPositionTop.checked = pipControlsPosition === "top";
   els.pipControlsPositionBottom.checked = pipControlsPosition === "bottom";
+  els.pipControlsBackgroundSolid.checked = pipControlsBackground === "background-solid";
+  els.pipControlsBackgroundTranslucent.checked = pipControlsBackground === "background-translucent";
+  els.pipControlsBackgroundClear.checked = pipControlsBackground === "background-clear";
   els.pipControlsSeparate.checked = state.settings.pipControlsSeparateFromImage;
   els.showFileExtension.checked = state.settings.showFileExtension;
   els.optimizeImages.checked = state.settings.optimizeImages;
