@@ -297,6 +297,12 @@ h2 {
   gap: 0.5rem;
 }
 
+.preview-stage.auto-hide-controls.separate {
+  display: grid;
+  place-items: center;
+  gap: 0;
+}
+
 #preview-image {
   display: none;
   width: 100%;
@@ -595,6 +601,10 @@ body.pip-body {
   flex-direction: column;
 }
 
+.pip-shell.auto-hide-controls.separate {
+  display: block;
+}
+
 .pip-shell img {
   display: block;
   width: 100%;
@@ -606,6 +616,11 @@ body.pip-body {
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
+}
+
+.pip-shell.auto-hide-controls.separate img {
+  flex: none;
+  height: 100%;
 }
 
 .pip-shell img.cover {
@@ -673,6 +688,22 @@ body.pip-body {
   inset: auto;
   width: 100%;
   margin: 0;
+}
+
+.auto-hide-controls .preview-pip-controls.separate,
+.auto-hide-controls .pip-controls.separate {
+  position: absolute;
+  width: auto;
+  margin: 0;
+  order: initial;
+}
+
+.auto-hide-controls .pip-controls.separate.top {
+  inset: 0 0 auto;
+}
+
+.auto-hide-controls .pip-controls.separate.bottom {
+  inset: auto 0 0;
 }
 
 .pip-controls.top {
@@ -781,6 +812,23 @@ body.pip-body {
   border-color: rgba(255, 255, 255, 0.3);
   background: rgba(14, 14, 14, 0.14);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.auto-hide-controls .pip-controls {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    visibility 0s linear 140ms;
+}
+
+.auto-hide-controls:hover .pip-controls,
+.auto-hide-controls:focus-within .pip-controls {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
 }
 
 @media (max-width: 860px) {
