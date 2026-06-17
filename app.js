@@ -17,6 +17,10 @@ const state = {
   settings: {
     fitMode: "contain",
     pipSize: "640x360",
+    pipControlsSize: "medium",
+    pipControlsPosition: "bottom",
+    pipControlsSeparateFromImage: true,
+    showFileExtension: false,
     optimizeImages: true,
     hideGuideOnLaunch: false,
   },
@@ -59,12 +63,22 @@ function bindElements() {
     "thumb-list",
     "prev-main",
     "next-main",
-    "current-title",
-    "current-count",
     "empty-state",
+    "preview-stage",
     "preview-image",
+    "preview-pip-controls",
+    "preview-pip-prev",
+    "preview-pip-label",
+    "preview-pip-next",
     "fit-mode",
     "pip-size",
+    "pip-controls-size-small",
+    "pip-controls-size-medium",
+    "pip-controls-size-large",
+    "pip-controls-position-top",
+    "pip-controls-position-bottom",
+    "pip-controls-separate",
+    "show-file-extension",
     "status-line",
     "guide-modal",
     "close-guide",
@@ -123,8 +137,8 @@ function bindEvents() {
     await addFiles(event.dataTransfer.files);
   });
 
-  els.prevMain.addEventListener("click", previousCard);
-  els.nextMain.addEventListener("click", nextCard);
+  els.previewPipPrev.addEventListener("click", previousCard);
+  els.previewPipNext.addEventListener("click", nextCard);
   els.openPip.addEventListener("click", openPip);
   els.openGuide.addEventListener("click", showGuideModal);
   els.clearAll.addEventListener("click", clearAllCards);
@@ -152,6 +166,46 @@ function bindEvents() {
   els.pipSize.addEventListener("change", () => {
     state.settings.pipSize = els.pipSize.value;
     saveSettings();
+  });
+
+  [els.pipControlsSizeSmall, els.pipControlsSizeMedium, els.pipControlsSizeLarge].forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!radio.checked) {
+        return;
+      }
+
+      state.settings.pipControlsSize = radio.value;
+      saveSettings();
+      updatePreview();
+      updatePip();
+    });
+  });
+
+  [els.pipControlsPositionTop, els.pipControlsPositionBottom].forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!radio.checked) {
+        return;
+      }
+
+      state.settings.pipControlsPosition = radio.value;
+      saveSettings();
+      updatePreview();
+      updatePip();
+    });
+  });
+
+  els.pipControlsSeparate.addEventListener("change", () => {
+    state.settings.pipControlsSeparateFromImage = els.pipControlsSeparate.checked;
+    saveSettings();
+    updatePreview();
+    updatePip();
+  });
+
+  els.showFileExtension.addEventListener("change", () => {
+    state.settings.showFileExtension = els.showFileExtension.checked;
+    saveSettings();
+    updatePreview();
+    updatePip();
   });
 
   els.optimizeImages.addEventListener("change", () => {
@@ -508,26 +562,33 @@ function updatePreview() {
   els.emptyState.style.display = hasCards ? "none" : "block";
   els.previewImage.style.display = hasCards ? "block" : "none";
   els.previewImage.classList.toggle("cover", state.settings.fitMode === "cover");
+  els.previewStage.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  els.previewPipControls.style.display = hasCards ? "grid" : "none";
+  els.previewPipControls.classList.toggle("small", state.settings.pipControlsSize === "small");
+  els.previewPipControls.classList.toggle("medium", state.settings.pipControlsSize === "medium");
+  els.previewPipControls.classList.toggle("large", state.settings.pipControlsSize === "large");
+  els.previewPipControls.classList.toggle("top", state.settings.pipControlsPosition === "top");
+  els.previewPipControls.classList.toggle("bottom", state.settings.pipControlsPosition !== "top");
+  els.previewPipControls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
 
   if (hasCards) {
     els.previewImage.src = getObjectUrl(card);
     els.previewImage.alt = card.name;
-    els.currentTitle.textContent = card.name;
-    els.currentCount.textContent = `${state.currentIndex + 1} / ${state.cards.length}`;
+    els.previewPipLabel.textContent = formatPipLabel(card);
+    els.previewPipPrev.disabled = state.cards.length <= 1;
+    els.previewPipNext.disabled = state.cards.length <= 1;
   } else {
     els.previewImage.removeAttribute("src");
     els.previewImage.alt = "";
-    els.currentTitle.textContent = "未登録";
-    els.currentCount.textContent = "0 / 0";
+    els.previewPipLabel.textContent = "";
+    els.previewPipPrev.disabled = true;
+    els.previewPipNext.disabled = true;
   }
 }
 
 function updateControls() {
   const hasCards = state.cards.length > 0;
-  const hasMultiple = state.cards.length > 1;
 
-  els.prevMain.disabled = !hasMultiple;
-  els.nextMain.disabled = !hasMultiple;
   els.openPip.disabled = !hasCards || !("documentPictureInPicture" in window);
   els.clearAll.disabled = !hasCards;
 }
@@ -575,6 +636,7 @@ function buildPipDocument() {
 
   const shell = pip.document.createElement("main");
   shell.className = "pip-shell";
+  shell.id = "pip-shell";
 
   const image = pip.document.createElement("img");
   image.id = "pip-image";
@@ -582,6 +644,7 @@ function buildPipDocument() {
 
   const controls = pip.document.createElement("div");
   controls.className = "pip-controls";
+  controls.id = "pip-controls";
 
   const prev = pip.document.createElement("button");
   prev.id = "pip-prev";
@@ -644,21 +707,39 @@ function updatePip() {
   }
 
   const image = pip.document.getElementById("pip-image");
+  const shell = pip.document.getElementById("pip-shell");
   const label = pip.document.getElementById("pip-label");
   const prev = pip.document.getElementById("pip-prev");
   const next = pip.document.getElementById("pip-next");
+  const controls = pip.document.getElementById("pip-controls");
   const card = getCurrentCard();
 
-  if (!image || !label || !prev || !next || !card) {
+  if (!image || !label || !prev || !next || !controls || !shell || !card) {
     return;
   }
 
   image.src = getObjectUrl(card);
   image.alt = card.name;
   image.classList.toggle("cover", state.settings.fitMode === "cover");
-  label.textContent = `${state.currentIndex + 1} / ${state.cards.length}　${card.name}`;
+  shell.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  controls.classList.toggle("small", state.settings.pipControlsSize === "small");
+  controls.classList.toggle("medium", state.settings.pipControlsSize === "medium");
+  controls.classList.toggle("large", state.settings.pipControlsSize === "large");
+  controls.classList.toggle("top", state.settings.pipControlsPosition === "top");
+  controls.classList.toggle("bottom", state.settings.pipControlsPosition !== "top");
+  controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  label.textContent = formatPipLabel(card);
   prev.disabled = state.cards.length <= 1;
   next.disabled = state.cards.length <= 1;
+}
+
+function formatPipLabel(card) {
+  const name = state.settings.showFileExtension ? card.name : stripFileExtension(card.name);
+  return `${state.currentIndex + 1} / ${state.cards.length}　${name}`;
+}
+
+function stripFileExtension(name) {
+  return name.replace(/\.[^.]+$/, "");
 }
 
 function selectCard(index) {
@@ -794,6 +875,13 @@ function saveSettings() {
 function applySettingsToControls() {
   els.fitMode.value = state.settings.fitMode;
   els.pipSize.value = state.settings.pipSize;
+  els.pipControlsSizeSmall.checked = state.settings.pipControlsSize === "small";
+  els.pipControlsSizeMedium.checked = state.settings.pipControlsSize === "medium";
+  els.pipControlsSizeLarge.checked = state.settings.pipControlsSize === "large";
+  els.pipControlsPositionTop.checked = state.settings.pipControlsPosition === "top";
+  els.pipControlsPositionBottom.checked = state.settings.pipControlsPosition !== "top";
+  els.pipControlsSeparate.checked = state.settings.pipControlsSeparateFromImage;
+  els.showFileExtension.checked = state.settings.showFileExtension;
   els.optimizeImages.checked = state.settings.optimizeImages;
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
 
