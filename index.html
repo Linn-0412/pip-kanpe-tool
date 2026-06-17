@@ -51,16 +51,13 @@
       </section>
 
       <section class="viewer-panel" aria-label="プレビュー">
-        <div class="viewer-toolbar">
-          <button id="prev-main" class="icon-button" type="button" aria-label="前の画像">←</button>
-          <div class="current-info">
-            <strong id="current-title">未登録</strong>
-            <span id="current-count">0 / 0</span>
+        <div id="preview-stage" class="preview-stage">
+          <div id="preview-pip-controls" class="pip-controls preview-pip-controls">
+            <button id="preview-pip-prev" class="pip-button" type="button" aria-label="前の画像">←</button>
+            <div id="preview-pip-label" class="pip-label"></div>
+            <button id="preview-pip-next" class="pip-button" type="button" aria-label="次の画像">→</button>
           </div>
-          <button id="next-main" class="icon-button" type="button" aria-label="次の画像">→</button>
-        </div>
 
-        <div class="preview-stage">
           <div id="empty-state" class="empty-state">
             <strong>攻略中に見たい画像を登録してください</strong>
             <span>PiP小窓の左右ボタン、またはこの画面の←→で切り替えできます。</span>
@@ -85,6 +82,52 @@
               <option value="960x540">960 x 540</option>
             </select>
           </label>
+        </div>
+
+        <div class="settings-row pip-settings">
+          <div class="settings-stack">
+            <span class="settings-title">矢印と画像名の表示位置</span>
+            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の表示位置">
+              <label class="check-option">
+                <input id="pip-controls-position-top" type="radio" name="pip-controls-position" value="top">
+                <span>上部</span>
+              </label>
+              <label class="check-option">
+                <input id="pip-controls-position-bottom" type="radio" name="pip-controls-position" value="bottom">
+                <span>下部</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-stack">
+            <span class="settings-title">矢印と画像名の大きさ</span>
+            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の大きさ">
+              <label class="check-option">
+                <input id="pip-controls-size-small" type="radio" name="pip-controls-size" value="small">
+                <span>小</span>
+              </label>
+              <label class="check-option">
+                <input id="pip-controls-size-medium" type="radio" name="pip-controls-size" value="medium" checked>
+                <span>中</span>
+              </label>
+              <label class="check-option">
+                <input id="pip-controls-size-large" type="radio" name="pip-controls-size" value="large">
+                <span>大</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-stack">
+            <label class="check-option">
+              <input id="pip-controls-separate" type="checkbox" checked>
+              <span>コントロールパネルを画像に重ねない</span>
+            </label>
+
+            <label class="check-option">
+              <input id="show-file-extension" type="checkbox">
+              <span>画像名の拡張子を表示する</span>
+            </label>
+          </div>
         </div>
 
         <p id="status-line" class="status-line" role="status"></p>
