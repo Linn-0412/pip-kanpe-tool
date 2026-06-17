@@ -78,7 +78,6 @@ h2 {
 }
 
 .header-actions,
-.viewer-toolbar,
 .viewer-options,
 .list-header {
   display: flex;
@@ -111,6 +110,7 @@ h2 {
 .app-shell {
   display: grid;
   grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  align-items: start;
   gap: 1rem;
   width: min(100%, 1280px);
   margin: 0 auto;
@@ -135,9 +135,11 @@ h2 {
 
 .viewer-panel {
   display: grid;
-  grid-template-rows: auto minmax(18rem, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto;
+  align-self: start;
   gap: 1rem;
-  min-height: calc(100vh - 6rem);
+  min-height: 0;
+  height: fit-content;
   padding: 1rem;
 }
 
@@ -168,14 +170,38 @@ h2 {
 .drop-zone span,
 .empty-state span,
 .list-header p,
-.status-line,
-.current-info span {
+.status-line {
   color: var(--muted);
   font-size: 0.9rem;
 }
 
 .settings-row {
   padding: 0.9rem 0;
+}
+
+.pip-settings {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.settings-title {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.settings-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .check-option {
@@ -258,10 +284,18 @@ h2 {
   background-size: 1.5rem 1.5rem;
 }
 
+.preview-stage.separate {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  place-items: normal;
+  gap: 0.5rem;
+}
+
 #preview-image {
   display: none;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: contain;
 }
 
@@ -278,23 +312,6 @@ h2 {
 .empty-state strong {
   margin-bottom: 0.4rem;
   font-size: 1.05rem;
-}
-
-.viewer-toolbar {
-  justify-content: space-between;
-}
-
-.current-info {
-  min-width: 0;
-  text-align: center;
-}
-
-.current-info strong {
-  display: block;
-  max-width: min(48vw, 38rem);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .viewer-options {
@@ -568,6 +585,11 @@ body.pip-body {
   background: #050505;
 }
 
+.pip-shell.separate {
+  display: flex;
+  flex-direction: column;
+}
+
 .pip-shell img {
   display: block;
   width: 100%;
@@ -575,39 +597,142 @@ body.pip-body {
   object-fit: contain;
 }
 
+.pip-shell.separate img {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
 .pip-shell img.cover {
   object-fit: cover;
 }
 
 .pip-controls {
+  --pip-control-button-width: 4.25rem;
+  --pip-control-button-height: 3rem;
+  --pip-control-button-font-size: 1.6rem;
+  --pip-control-gap: 0.5rem;
+  --pip-control-padding: 0.5rem;
+  --pip-control-label-padding-y: 0.65rem;
+  --pip-control-label-padding-x: 0.75rem;
+  --pip-control-label-font-size: 0.9rem;
   position: absolute;
   inset: auto 0 0;
   display: grid;
-  grid-template-columns: 4.25rem minmax(0, 1fr) 4.25rem;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  grid-template-columns: var(--pip-control-button-width) minmax(0, 1fr) var(--pip-control-button-width);
+  align-items: stretch;
+  gap: var(--pip-control-gap);
+  padding: var(--pip-control-padding);
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.78));
 }
 
+.pip-controls.small {
+  --pip-control-button-width: 3.5rem;
+  --pip-control-button-height: 2.5rem;
+  --pip-control-button-font-size: 1.25rem;
+  --pip-control-gap: 0.35rem;
+  --pip-control-padding: 0.35rem;
+  --pip-control-label-padding-y: 0.45rem;
+  --pip-control-label-padding-x: 0.6rem;
+  --pip-control-label-font-size: 0.82rem;
+}
+
+.pip-controls.medium {
+  --pip-control-button-width: 4.25rem;
+  --pip-control-button-height: 3rem;
+  --pip-control-button-font-size: 1.6rem;
+  --pip-control-gap: 0.5rem;
+  --pip-control-padding: 0.5rem;
+  --pip-control-label-padding-y: 0.65rem;
+  --pip-control-label-padding-x: 0.75rem;
+  --pip-control-label-font-size: 0.9rem;
+}
+
+.pip-controls.large {
+  --pip-control-button-width: 5rem;
+  --pip-control-button-height: 3.5rem;
+  --pip-control-button-font-size: 1.9rem;
+  --pip-control-gap: 0.65rem;
+  --pip-control-padding: 0.65rem;
+  --pip-control-label-padding-y: 0.85rem;
+  --pip-control-label-padding-x: 1rem;
+  --pip-control-label-font-size: 1rem;
+}
+
+.preview-pip-controls {
+  z-index: 2;
+}
+
+.preview-pip-controls.separate {
+  position: static;
+  inset: auto;
+  width: 100%;
+  margin: 0;
+}
+
+.pip-controls.top {
+  inset: 0 0 auto;
+  background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.78));
+}
+
+.pip-controls.bottom {
+  inset: auto 0 0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.78));
+}
+
+.pip-controls.separate {
+  position: static;
+  width: 100%;
+  margin: 0;
+  padding: var(--pip-control-padding);
+  background: rgba(14, 14, 14, 0.82);
+  box-sizing: border-box;
+}
+
+.pip-controls.separate.top {
+  order: -1;
+}
+
+.pip-controls.separate.bottom {
+  order: 1;
+}
+
+.pip-controls.separate .pip-button,
+.pip-controls.separate .pip-label {
+  backdrop-filter: none;
+}
+
 .pip-button {
-  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pip-control-button-width);
+  height: 100%;
+  padding: 0;
+  line-height: 1;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 8px;
   color: #f6f6f6;
   background: rgba(14, 14, 14, 0.9);
-  font-size: 1.6rem;
+  font-size: var(--pip-control-button-font-size);
   font-weight: 900;
 }
 
 .pip-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
-  padding: 0.65rem 0.75rem;
+  height: 100%;
+  padding: var(--pip-control-label-padding-y) var(--pip-control-label-padding-x);
+  box-sizing: border-box;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
   color: #f6f6f6;
   background: rgba(14, 14, 14, 0.76);
+  font-size: var(--pip-control-label-font-size);
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -633,14 +758,13 @@ body.pip-body {
   }
 
   .viewer-panel {
-    min-height: 60vh;
+    min-height: 0;
   }
 }
 
 @media (max-width: 560px) {
   .header-actions,
-  .drop-zone,
-  .viewer-toolbar {
+  .drop-zone {
     align-items: stretch;
     flex-direction: column;
   }
@@ -651,11 +775,6 @@ body.pip-body {
   .danger-button {
     justify-content: center;
     width: 100%;
-  }
-
-  .viewer-toolbar {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr) 3rem;
   }
 
   .guide-header {
