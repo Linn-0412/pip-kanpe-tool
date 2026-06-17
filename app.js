@@ -625,7 +625,7 @@ function buildPipDocument() {
     return;
   }
 
-  pip.document.title = "PiP カンペ";
+  pip.document.title = formatPipDocumentTitle(getCurrentCard());
   pip.document.body.className = "pip-body";
 
   const style = pip.document.createElement("style");
@@ -717,6 +717,7 @@ function updatePip() {
 
   image.src = getObjectUrl(card);
   image.alt = card.name;
+  pip.document.title = formatPipDocumentTitle(card);
   image.classList.toggle("cover", state.settings.fitMode === "cover");
   shell.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
   applyPipControlClasses(controls);
@@ -744,8 +745,15 @@ function getPipControlsPosition() {
 }
 
 function formatPipLabel(card) {
-  const name = state.settings.showFileExtension ? card.name : stripFileExtension(card.name);
-  return `${state.currentIndex + 1} / ${state.cards.length}　${name}`;
+  return `${state.currentIndex + 1} / ${state.cards.length}　${formatPipName(card)}`;
+}
+
+function formatPipDocumentTitle(card) {
+  return card ? `PiP カンペ - ${formatPipName(card)}` : "PiP カンペ";
+}
+
+function formatPipName(card) {
+  return state.settings.showFileExtension ? card.name : stripFileExtension(card.name);
 }
 
 function stripFileExtension(name) {
