@@ -61,8 +61,6 @@ function bindElements() {
     "deck-meta",
     "clear-all",
     "thumb-list",
-    "prev-main",
-    "next-main",
     "empty-state",
     "preview-stage",
     "preview-image",

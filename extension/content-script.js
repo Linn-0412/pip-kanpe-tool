@@ -12,12 +12,12 @@ if (!globalThis.__pipKanpeHotkeysInstalled) {
 }
 
 function runCommand(command) {
-  const buttonId = {
-    previous: "prev-main",
-    next: "next-main",
+  const buttonIds = {
+    previous: ["preview-pip-prev", "prev-main"],
+    next: ["preview-pip-next", "next-main"],
   }[command];
 
-  const button = buttonId ? document.getElementById(buttonId) : null;
+  const button = findCommandButton(buttonIds);
   if (button instanceof HTMLButtonElement) {
     if (button.disabled) {
       return { ok: false, reason: "button-disabled" };
@@ -36,4 +36,19 @@ function runCommand(command) {
     window.location.origin,
   );
   return { ok: true, via: "window-message" };
+}
+
+function findCommandButton(buttonIds) {
+  if (!Array.isArray(buttonIds)) {
+    return null;
+  }
+
+  for (const buttonId of buttonIds) {
+    const button = document.getElementById(buttonId);
+    if (button instanceof HTMLButtonElement) {
+      return button;
+    }
+  }
+
+  return null;
 }
