@@ -118,6 +118,25 @@
           </div>
 
           <div class="settings-stack">
+            <span class="settings-title">背景の濃さ</span>
+            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の背景の濃さ">
+              <label class="check-option">
+                <input id="pip-controls-background-solid" type="radio" name="pip-controls-background" value="solid" checked>
+                <span>通常</span>
+              </label>
+              <label class="check-option">
+                <input id="pip-controls-background-translucent" type="radio" name="pip-controls-background" value="translucent">
+                <span>薄め</span>
+              </label>
+              <label class="check-option">
+                <input id="pip-controls-background-clear" type="radio" name="pip-controls-background" value="clear">
+                <span>透明</span>
+              </label>
+            </div>
+            <small class="settings-hint">透明は画像に重ねると効果が見えます。</small>
+          </div>
+
+          <div class="settings-stack">
             <label class="check-option">
               <input id="pip-controls-separate" type="checkbox" checked>
               <span>コントロールパネルを画像に重ねない</span>

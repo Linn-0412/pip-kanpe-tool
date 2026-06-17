@@ -198,6 +198,11 @@ h2 {
   font-weight: 700;
 }
 
+.settings-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .settings-choice-group {
   display: flex;
   flex-wrap: wrap;
@@ -702,6 +707,24 @@ body.pip-body {
   backdrop-filter: none;
 }
 
+.pip-controls.background-translucent.top {
+  background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.38));
+}
+
+.pip-controls.background-translucent.bottom {
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.38));
+}
+
+.pip-controls.background-translucent.separate {
+  background: rgba(14, 14, 14, 0.42);
+}
+
+.pip-controls.background-clear.top,
+.pip-controls.background-clear.bottom,
+.pip-controls.background-clear.separate {
+  background: transparent;
+}
+
 .pip-button {
   display: flex;
   align-items: center;
@@ -736,6 +759,28 @@ body.pip-body {
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pip-controls.background-translucent .pip-button {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(14, 14, 14, 0.58);
+}
+
+.pip-controls.background-translucent .pip-label {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(14, 14, 14, 0.5);
+}
+
+.pip-controls.background-clear .pip-button {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(14, 14, 14, 0.18);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.pip-controls.background-clear .pip-label {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(14, 14, 14, 0.14);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 @media (max-width: 860px) {
