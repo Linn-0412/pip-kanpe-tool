@@ -27,6 +27,7 @@ const state = {
     pipControlsPosition: DEFAULT_PIP_CONTROL_POSITION,
     pipControlsBackground: DEFAULT_PIP_CONTROL_BACKGROUND,
     pipControlsSeparateFromImage: true,
+    pipControlsAutoHide: true,
     showFileExtension: false,
     optimizeImages: true,
     hideGuideOnLaunch: false,
@@ -86,6 +87,7 @@ function bindElements() {
     "pip-controls-background-translucent",
     "pip-controls-background-clear",
     "pip-controls-separate",
+    "pip-controls-auto-hide",
     "show-file-extension",
     "status-line",
     "guide-modal",
@@ -219,6 +221,13 @@ function bindEvents() {
 
   els.pipControlsSeparate.addEventListener("change", () => {
     state.settings.pipControlsSeparateFromImage = els.pipControlsSeparate.checked;
+    saveSettings();
+    updatePreview();
+    updatePip();
+  });
+
+  els.pipControlsAutoHide.addEventListener("change", () => {
+    state.settings.pipControlsAutoHide = els.pipControlsAutoHide.checked;
     saveSettings();
     updatePreview();
     updatePip();
@@ -586,6 +595,7 @@ function updatePreview() {
   els.previewImage.style.display = hasCards ? "block" : "none";
   els.previewImage.classList.toggle("cover", state.settings.fitMode === "cover");
   els.previewStage.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  els.previewStage.classList.toggle("auto-hide-controls", state.settings.pipControlsAutoHide);
   els.previewPipControls.style.display = hasCards ? "grid" : "none";
   applyPipControlClasses(els.previewPipControls);
 
@@ -741,6 +751,7 @@ function updatePip() {
   pip.document.title = formatPipDocumentTitle(card);
   image.classList.toggle("cover", state.settings.fitMode === "cover");
   shell.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  shell.classList.toggle("auto-hide-controls", state.settings.pipControlsAutoHide);
   applyPipControlClasses(controls);
   label.textContent = formatPipLabel(card);
   prev.disabled = state.cards.length <= 1;
@@ -935,6 +946,7 @@ function applySettingsToControls() {
   els.pipControlsBackgroundTranslucent.checked = pipControlsBackground === "background-translucent";
   els.pipControlsBackgroundClear.checked = pipControlsBackground === "background-clear";
   els.pipControlsSeparate.checked = state.settings.pipControlsSeparateFromImage;
+  els.pipControlsAutoHide.checked = state.settings.pipControlsAutoHide;
   els.showFileExtension.checked = state.settings.showFileExtension;
   els.optimizeImages.checked = state.settings.optimizeImages;
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
