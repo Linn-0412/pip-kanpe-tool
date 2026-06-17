@@ -7,6 +7,10 @@ const fileNameCollator = new Intl.Collator("ja", {
   numeric: true,
   sensitivity: "base",
 });
+const PIP_CONTROL_SIZE_CLASSES = ["small", "medium", "large"];
+const PIP_CONTROL_POSITION_CLASSES = ["top", "bottom"];
+const DEFAULT_PIP_CONTROL_SIZE = "medium";
+const DEFAULT_PIP_CONTROL_POSITION = "bottom";
 
 const state = {
   db: null,
@@ -17,8 +21,8 @@ const state = {
   settings: {
     fitMode: "contain",
     pipSize: "640x360",
-    pipControlsSize: "medium",
-    pipControlsPosition: "bottom",
+    pipControlsSize: DEFAULT_PIP_CONTROL_SIZE,
+    pipControlsPosition: DEFAULT_PIP_CONTROL_POSITION,
     pipControlsSeparateFromImage: true,
     showFileExtension: false,
     optimizeImages: true,
@@ -562,12 +566,7 @@ function updatePreview() {
   els.previewImage.classList.toggle("cover", state.settings.fitMode === "cover");
   els.previewStage.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
   els.previewPipControls.style.display = hasCards ? "grid" : "none";
-  els.previewPipControls.classList.toggle("small", state.settings.pipControlsSize === "small");
-  els.previewPipControls.classList.toggle("medium", state.settings.pipControlsSize === "medium");
-  els.previewPipControls.classList.toggle("large", state.settings.pipControlsSize === "large");
-  els.previewPipControls.classList.toggle("top", state.settings.pipControlsPosition === "top");
-  els.previewPipControls.classList.toggle("bottom", state.settings.pipControlsPosition !== "top");
-  els.previewPipControls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  applyPipControlClasses(els.previewPipControls);
 
   if (hasCards) {
     els.previewImage.src = getObjectUrl(card);
@@ -720,15 +719,28 @@ function updatePip() {
   image.alt = card.name;
   image.classList.toggle("cover", state.settings.fitMode === "cover");
   shell.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
-  controls.classList.toggle("small", state.settings.pipControlsSize === "small");
-  controls.classList.toggle("medium", state.settings.pipControlsSize === "medium");
-  controls.classList.toggle("large", state.settings.pipControlsSize === "large");
-  controls.classList.toggle("top", state.settings.pipControlsPosition === "top");
-  controls.classList.toggle("bottom", state.settings.pipControlsPosition !== "top");
-  controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  applyPipControlClasses(controls);
   label.textContent = formatPipLabel(card);
   prev.disabled = state.cards.length <= 1;
   next.disabled = state.cards.length <= 1;
+}
+
+function applyPipControlClasses(controls) {
+  controls.classList.remove(...PIP_CONTROL_SIZE_CLASSES, ...PIP_CONTROL_POSITION_CLASSES);
+  controls.classList.add(getPipControlsSize(), getPipControlsPosition());
+  controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+}
+
+function getPipControlsSize() {
+  return PIP_CONTROL_SIZE_CLASSES.includes(state.settings.pipControlsSize)
+    ? state.settings.pipControlsSize
+    : DEFAULT_PIP_CONTROL_SIZE;
+}
+
+function getPipControlsPosition() {
+  return PIP_CONTROL_POSITION_CLASSES.includes(state.settings.pipControlsPosition)
+    ? state.settings.pipControlsPosition
+    : DEFAULT_PIP_CONTROL_POSITION;
 }
 
 function formatPipLabel(card) {
@@ -873,11 +885,13 @@ function saveSettings() {
 function applySettingsToControls() {
   els.fitMode.value = state.settings.fitMode;
   els.pipSize.value = state.settings.pipSize;
-  els.pipControlsSizeSmall.checked = state.settings.pipControlsSize === "small";
-  els.pipControlsSizeMedium.checked = state.settings.pipControlsSize === "medium";
-  els.pipControlsSizeLarge.checked = state.settings.pipControlsSize === "large";
-  els.pipControlsPositionTop.checked = state.settings.pipControlsPosition === "top";
-  els.pipControlsPositionBottom.checked = state.settings.pipControlsPosition !== "top";
+  const pipControlsSize = getPipControlsSize();
+  const pipControlsPosition = getPipControlsPosition();
+  els.pipControlsSizeSmall.checked = pipControlsSize === "small";
+  els.pipControlsSizeMedium.checked = pipControlsSize === "medium";
+  els.pipControlsSizeLarge.checked = pipControlsSize === "large";
+  els.pipControlsPositionTop.checked = pipControlsPosition === "top";
+  els.pipControlsPositionBottom.checked = pipControlsPosition === "bottom";
   els.pipControlsSeparate.checked = state.settings.pipControlsSeparateFromImage;
   els.showFileExtension.checked = state.settings.showFileExtension;
   els.optimizeImages.checked = state.settings.optimizeImages;
