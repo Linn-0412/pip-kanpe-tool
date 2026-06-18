@@ -60,7 +60,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir site
-          cp index.html styles.css app.js LICENSE README.md .nojekyll site/
+          cp index.html styles.css app.js favicon.jpg LICENSE README.md .nojekyll site/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
