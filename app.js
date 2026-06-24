@@ -573,13 +573,22 @@ function renderThumbList() {
         () => toggleHidden(index),
         `toggle${card.hidden ? " active" : ""}`,
       ),
-      makeMiniButton("↑", "前へ移動", () => moveCard(index, -1), "", index === 0),
-      makeMiniButton("↓", "後ろへ移動", () => moveCard(index, 1), "", index === state.cards.length - 1),
       makeMiniButton("×", "削除", () => removeCard(index), "danger"),
     );
 
     item.append(image, body, actions);
-    fragment.append(item);
+
+    const reorder = document.createElement("div");
+    reorder.className = "thumb-reorder";
+    reorder.append(
+      makeMiniButton("↑", "前へ移動", () => moveCard(index, -1), "", index === 0),
+      makeMiniButton("↓", "後ろへ移動", () => moveCard(index, 1), "", index === state.cards.length - 1),
+    );
+
+    const row = document.createElement("div");
+    row.className = "thumb-row";
+    row.append(item, reorder);
+    fragment.append(row);
   });
 
   els.thumbList.append(fragment);
