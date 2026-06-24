@@ -149,7 +149,6 @@ h2 {
   justify-content: space-between;
   gap: 1rem;
   min-height: 5rem;
-  margin-top: 0.35rem;
   padding: 1rem;
   border: 1px dashed rgba(0, 209, 189, 0.55);
   border-radius: 8px;
@@ -292,7 +291,8 @@ h2 {
 
 .list-header {
   justify-content: space-between;
-  padding-bottom: 0.75rem;
+  margin-top: 0.85rem;
+  padding: 0.85rem 0 0.75rem;
   border-bottom: 1px solid var(--line);
 }
 
