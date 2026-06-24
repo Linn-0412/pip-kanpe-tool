@@ -549,7 +549,9 @@ function renderThumbList() {
 
   state.cards.forEach((card, index) => {
     const item = document.createElement("article");
-    item.className = `thumb-item${index === state.currentIndex ? " active" : ""}${card.hidden ? " is-hidden" : ""}`;
+    item.className = `thumb-item${index === state.currentIndex && !card.hidden ? " active" : ""}${
+      card.hidden ? " is-hidden" : ""
+    }`;
 
     const select = document.createElement("button");
     select.type = "button";
@@ -684,8 +686,9 @@ function updateEmptyState() {
 
 function updateControls() {
   const hasCards = state.cards.length > 0;
+  const hasVisibleCards = getVisibleIndices().length > 0;
 
-  els.openPip.disabled = !hasCards || !("documentPictureInPicture" in window);
+  els.openPip.disabled = !hasVisibleCards || !("documentPictureInPicture" in window);
   els.clearAll.disabled = !hasCards;
 }
 
@@ -821,6 +824,7 @@ function updatePip() {
 
   if (!card) {
     image.removeAttribute("src");
+    image.style.display = "none";
     image.alt = "";
     pip.document.title = formatPipDocumentTitle(null);
     label.textContent =
@@ -831,6 +835,7 @@ function updatePip() {
   }
 
   image.src = getObjectUrl(card);
+  image.style.display = "block";
   image.alt = card.name;
   pip.document.title = formatPipDocumentTitle(card);
   image.classList.toggle("cover", state.settings.fitMode === "cover");
@@ -889,6 +894,10 @@ function stripFileExtension(name) {
 }
 
 function selectCard(index) {
+  if (state.cards[index]?.hidden) {
+    return;
+  }
+
   state.currentIndex = index;
   render();
 }
