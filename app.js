@@ -548,25 +548,33 @@ function renderThumbList() {
     const item = document.createElement("article");
     item.className = `thumb-item${index === state.currentIndex ? " active" : ""}${card.hidden ? " is-hidden" : ""}`;
 
+    const select = document.createElement("button");
+    select.type = "button";
+    select.className = "thumb-select";
+    select.disabled = card.hidden;
+    select.title = card.hidden ? "非表示中です（「表」で再表示）" : "この画像をプレビューに表示";
+    select.addEventListener("click", () => selectCard(index));
+
     const image = document.createElement("img");
     image.src = getObjectUrl(card);
     image.alt = "";
 
-    const body = document.createElement("div");
-    const name = document.createElement("div");
+    const body = document.createElement("span");
+    body.className = "thumb-body";
+    const name = document.createElement("span");
     name.className = "thumb-name";
     name.textContent = card.name;
 
-    const sub = document.createElement("div");
+    const sub = document.createElement("span");
     sub.className = "thumb-sub";
     sub.textContent = `${index + 1}枚目 · ${formatBytes(card.size || 0)}`;
 
     body.append(name, sub);
+    select.append(image, body);
 
     const actions = document.createElement("div");
     actions.className = "thumb-actions";
     actions.append(
-      makeMiniButton("選", "この画像を表示", () => selectCard(index), "", card.hidden),
       makeMiniButton(
         card.hidden ? "表" : "非",
         card.hidden ? "プレビュー/PiPで表示する" : "プレビュー/PiPで非表示にする",
@@ -576,7 +584,7 @@ function renderThumbList() {
       makeMiniButton("×", "削除", () => removeCard(index), "danger"),
     );
 
-    item.append(image, body, actions);
+    item.append(select, actions);
 
     const reorder = document.createElement("div");
     reorder.className = "thumb-reorder";
