@@ -1,18 +1,30 @@
+import {
+  DEFAULT_PIP_CONTROL_BACKGROUND,
+  DEFAULT_PIP_CONTROL_POSITION,
+  DEFAULT_PIP_CONTROL_SIZE,
+  PIP_CONTROL_BACKGROUND_CLASSES,
+  PIP_CONTROL_POSITION_CLASSES,
+  PIP_CONTROL_SIZE_CLASSES,
+  compareFilesByName,
+  formatBytes,
+  formatPipLabel as formatCorePipLabel,
+  formatPipName as formatCorePipName,
+  getCurrentCard as getCurrentVisibleCard,
+  getVisibleIndices as getVisibleCardIndices,
+  normalizeIndex,
+  reorder as reorderCards,
+  resolvePipControlsBackground,
+  resolvePipControlsPosition,
+  resolvePipControlsSize,
+  step as stepVisibleCard,
+  toggleHidden as toggleHiddenCards,
+} from "./core.js";
+
 const MAX_CARDS = 40;
 const DB_NAME = "pip-kanpe-tool";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
 const SETTINGS_KEY = "pip-kanpe-settings";
-const fileNameCollator = new Intl.Collator("ja", {
-  numeric: true,
-  sensitivity: "base",
-});
-const PIP_CONTROL_SIZE_CLASSES = ["small", "medium", "large"];
-const PIP_CONTROL_POSITION_CLASSES = ["top", "bottom"];
-const PIP_CONTROL_BACKGROUND_CLASSES = ["background-solid", "background-translucent", "background-clear"];
-const DEFAULT_PIP_CONTROL_SIZE = "medium";
-const DEFAULT_PIP_CONTROL_POSITION = "bottom";
-const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
 
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
@@ -461,14 +473,6 @@ async function addFiles(fileList) {
   setStatus(`${accepted.length}枚追加しました。`);
 }
 
-function compareFilesByName(a, b) {
-  const byName = fileNameCollator.compare(a.name, b.name);
-  if (byName !== 0) {
-    return byName;
-  }
-  return a.lastModified - b.lastModified;
-}
-
 function optimizeImage(file) {
   return new Promise((resolve) => {
     const image = new Image();
@@ -859,26 +863,19 @@ function applyPipControlClasses(controls) {
 }
 
 function getPipControlsSize() {
-  return PIP_CONTROL_SIZE_CLASSES.includes(state.settings.pipControlsSize)
-    ? state.settings.pipControlsSize
-    : DEFAULT_PIP_CONTROL_SIZE;
+  return resolvePipControlsSize(state.settings);
 }
 
 function getPipControlsPosition() {
-  return PIP_CONTROL_POSITION_CLASSES.includes(state.settings.pipControlsPosition)
-    ? state.settings.pipControlsPosition
-    : DEFAULT_PIP_CONTROL_POSITION;
+  return resolvePipControlsPosition(state.settings);
 }
 
 function getPipControlsBackground() {
-  const className = `background-${state.settings.pipControlsBackground}`;
-  return PIP_CONTROL_BACKGROUND_CLASSES.includes(className) ? className : `background-${DEFAULT_PIP_CONTROL_BACKGROUND}`;
+  return resolvePipControlsBackground(state.settings);
 }
 
 function formatPipLabel(card) {
-  const visible = getVisibleIndices();
-  const position = visible.indexOf(state.currentIndex);
-  return `${position === -1 ? 1 : position + 1} / ${visible.length}　${formatPipName(card)}`;
+  return formatCorePipLabel(state.cards, state.currentIndex, state.settings);
 }
 
 function formatPipDocumentTitle(card) {
@@ -886,11 +883,7 @@ function formatPipDocumentTitle(card) {
 }
 
 function formatPipName(card) {
-  return state.settings.showFileExtension ? card.name : stripFileExtension(card.name);
-}
-
-function stripFileExtension(name) {
-  return name.replace(/\.[^.]+$/, "");
+  return formatCorePipName(card, state.settings);
 }
 
 function selectCard(index) {
@@ -911,20 +904,12 @@ function nextCard() {
 }
 
 function stepCard(direction) {
-  const visible = getVisibleIndices();
-  if (visible.length <= 1) {
+  const nextIndex = stepVisibleCard(state.cards, state.currentIndex, direction);
+  if (nextIndex === state.currentIndex) {
     return;
   }
 
-  const position = visible.indexOf(state.currentIndex);
-  if (position === -1) {
-    state.currentIndex = visible[0];
-    render();
-    return;
-  }
-
-  const nextPosition = (position + direction + visible.length) % visible.length;
-  state.currentIndex = visible[nextPosition];
+  state.currentIndex = nextIndex;
   render();
 }
 
@@ -934,14 +919,15 @@ async function toggleHidden(index) {
     return;
   }
 
-  card.hidden = !card.hidden;
-  await putCard(card);
+  state.cards = toggleHiddenCards(state.cards, index);
+  const updatedCard = state.cards[index];
+  await putCard(updatedCard);
   normalizeCurrentIndex();
   render();
   setStatus(
-    card.hidden
-      ? `「${card.name}」をプレビュー/PiPで非表示にしました。`
-      : `「${card.name}」を再表示しました。`,
+    updatedCard.hidden
+      ? `「${updatedCard.name}」をプレビュー/PiPで非表示にしました。`
+      : `「${updatedCard.name}」を再表示しました。`,
   );
 }
 
@@ -961,20 +947,13 @@ async function removeCard(index) {
 }
 
 async function moveCard(index, direction) {
-  const targetIndex = index + direction;
-  if (targetIndex < 0 || targetIndex >= state.cards.length) {
+  const result = reorderCards(state.cards, index, direction, state.currentIndex);
+  if (result.cards.every((card, cardIndex) => card === state.cards[cardIndex])) {
     return;
   }
 
-  const [card] = state.cards.splice(index, 1);
-  state.cards.splice(targetIndex, 0, card);
-
-  if (state.currentIndex === index) {
-    state.currentIndex = targetIndex;
-  } else if (state.currentIndex === targetIndex) {
-    state.currentIndex = index;
-  }
-
+  state.cards = result.cards;
+  state.currentIndex = result.currentIndex;
   await persistOrder();
   render();
 }
@@ -1006,34 +985,15 @@ async function clearAllCards() {
 }
 
 function normalizeCurrentIndex() {
-  if (state.cards.length === 0) {
-    state.currentIndex = 0;
-    return;
-  }
-  state.currentIndex = Math.min(Math.max(state.currentIndex, 0), state.cards.length - 1);
-
-  if (state.cards[state.currentIndex].hidden) {
-    const visible = getVisibleIndices();
-    if (visible.length > 0) {
-      const forward = visible.find((i) => i >= state.currentIndex);
-      state.currentIndex = forward ?? visible[visible.length - 1];
-    }
-  }
+  state.currentIndex = normalizeIndex(state.cards, state.currentIndex);
 }
 
 function getVisibleIndices() {
-  const indices = [];
-  state.cards.forEach((card, index) => {
-    if (!card.hidden) {
-      indices.push(index);
-    }
-  });
-  return indices;
+  return getVisibleCardIndices(state.cards);
 }
 
 function getCurrentCard() {
-  const card = state.cards[state.currentIndex];
-  return card && !card.hidden ? card : null;
+  return getCurrentVisibleCard(state.cards, state.currentIndex);
 }
 
 function getObjectUrl(card) {
@@ -1102,17 +1062,6 @@ function applySettingsToControls() {
 function setStatus(message, isError = false) {
   els.statusLine.textContent = message;
   els.statusLine.style.color = isError ? "var(--danger)" : "var(--muted)";
-}
-
-function formatBytes(bytes) {
-  if (!bytes) {
-    return "0 B";
-  }
-
-  const units = ["B", "KB", "MB", "GB"];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
 function toCamel(value) {
