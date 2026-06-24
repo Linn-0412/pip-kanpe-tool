@@ -149,6 +149,7 @@ h2 {
   justify-content: space-between;
   gap: 1rem;
   min-height: 5rem;
+  margin-top: 0.35rem;
   padding: 1rem;
   border: 1px dashed rgba(0, 209, 189, 0.55);
   border-radius: 8px;
@@ -242,6 +243,51 @@ h2 {
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.5;
+}
+
+.group-settings {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.group-settings summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.4rem;
+  padding: 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.group-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.group-settings summary::after {
+  content: "開く";
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.group-settings[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.group-settings[open] summary::after {
+  content: "閉じる";
+}
+
+.group-settings-body {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
 }
 
 .list-header {

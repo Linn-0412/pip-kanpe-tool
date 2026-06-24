@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.4.0">
-    <script type="module" src="./app.js?v=1.4.0"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.4.1">
+    <script type="module" src="./app.js?v=1.4.1"></script>
   </head>
   <body>
     <header class="app-header">
@@ -45,16 +45,21 @@
             <span>表示グループ</span>
             <select id="group-filter"></select>
           </label>
-          <label class="group-field">
-            <span>グループ名</span>
-            <input id="group-name" type="text" maxlength="24" placeholder="例: 絶ケフカ 野良">
-          </label>
-          <div class="group-actions">
-            <button id="add-group" class="secondary-button" type="button">追加</button>
-            <button id="rename-group" class="secondary-button" type="button">名前変更</button>
-            <button id="delete-group" class="danger-button" type="button">削除</button>
-          </div>
-          <small>選択中のグループで画像を追加すると、そのグループに自動で入ります。</small>
+          <details class="group-settings">
+            <summary>グループ設定</summary>
+            <div class="group-settings-body">
+              <label class="group-field">
+                <span>グループ名</span>
+                <input id="group-name" type="text" maxlength="24" placeholder="例: 絶ケフカ 野良">
+              </label>
+              <div class="group-actions">
+                <button id="add-group" class="secondary-button" type="button">追加</button>
+                <button id="rename-group" class="secondary-button" type="button">名前変更</button>
+                <button id="delete-group" class="danger-button" type="button">削除</button>
+              </div>
+              <small>選択中のグループで画像を追加すると、そのグループに自動で入ります。</small>
+            </div>
+          </details>
         </div>
 
         <div class="list-header">
