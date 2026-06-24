@@ -555,7 +555,7 @@ function renderThumbList() {
     select.type = "button";
     select.className = "thumb-select";
     select.disabled = card.hidden;
-    select.title = card.hidden ? "非表示中です（「表」で再表示）" : "この画像をプレビューに表示";
+    select.title = card.hidden ? "非表示中です（目アイコンで再表示）" : "この画像をプレビューに表示";
     select.addEventListener("click", () => selectCard(index));
 
     const figure = document.createElement("span");
@@ -618,7 +618,6 @@ function makeHideToggle(card, index) {
   button.className = `mini-button toggle${card.hidden ? " active" : ""}`;
   button.innerHTML = card.hidden ? EYE_OFF_ICON : EYE_ICON;
   button.title = card.hidden ? "プレビュー/PiPで表示する" : "プレビュー/PiPで非表示にする";
-  button.setAttribute("aria-pressed", String(card.hidden));
   button.setAttribute("aria-label", card.hidden ? "再表示する" : "非表示にする");
   button.addEventListener("click", () => toggleHidden(index));
   return button;
