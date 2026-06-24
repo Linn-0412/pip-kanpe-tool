@@ -14,6 +14,9 @@ const DEFAULT_PIP_CONTROL_SIZE = "medium";
 const DEFAULT_PIP_CONTROL_POSITION = "bottom";
 const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
 
+const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
+
 const state = {
   db: null,
   cards: [],
@@ -359,7 +362,7 @@ function loadCards() {
 
     request.onsuccess = () => {
       const cards = request.result
-        .map((card, index) => ({ ...card, order: card.order ?? index }))
+        .map((card, index) => ({ ...card, order: card.order ?? index, hidden: Boolean(card.hidden) }))
         .sort((a, b) => a.order - b.order);
       resolve(cards);
     };
@@ -440,6 +443,7 @@ async function addFiles(fileList) {
         size: storedBlob.size,
         originalSize: file.size,
         order: baseOrder + index,
+        hidden: false,
         createdAt: Date.now(),
         blob: storedBlob,
       };
@@ -525,7 +529,9 @@ function render() {
 
 function renderDeckMeta() {
   const totalSize = state.cards.reduce((sum, card) => sum + (card.size || 0), 0);
-  els.deckMeta.textContent = `${state.cards.length} / ${MAX_CARDS} · ${formatBytes(totalSize)}`;
+  const hiddenCount = state.cards.filter((card) => card.hidden).length;
+  const hiddenLabel = hiddenCount > 0 ? ` · 非表示 ${hiddenCount}` : "";
+  els.deckMeta.textContent = `${state.cards.length} / ${MAX_CARDS} · ${formatBytes(totalSize)}${hiddenLabel}`;
 }
 
 function renderThumbList() {
@@ -543,37 +549,80 @@ function renderThumbList() {
 
   state.cards.forEach((card, index) => {
     const item = document.createElement("article");
-    item.className = `thumb-item${index === state.currentIndex ? " active" : ""}`;
+    item.className = `thumb-item${index === state.currentIndex && !card.hidden ? " active" : ""}${
+      card.hidden ? " is-hidden" : ""
+    }`;
+
+    const select = document.createElement("button");
+    select.type = "button";
+    select.className = "thumb-select";
+    select.disabled = card.hidden;
+    select.title = card.hidden ? "非表示中です（目アイコンで再表示）" : "この画像をプレビューに表示";
+    select.addEventListener("click", () => selectCard(index));
+
+    const figure = document.createElement("span");
+    figure.className = "thumb-figure";
 
     const image = document.createElement("img");
     image.src = getObjectUrl(card);
     image.alt = "";
+    figure.append(image);
 
-    const body = document.createElement("div");
-    const name = document.createElement("div");
+    if (card.hidden) {
+      const badge = document.createElement("span");
+      badge.className = "thumb-badge";
+      badge.textContent = "非表示";
+      figure.append(badge);
+    }
+
+    const body = document.createElement("span");
+    body.className = "thumb-body";
+    const name = document.createElement("span");
     name.className = "thumb-name";
     name.textContent = card.name;
 
-    const sub = document.createElement("div");
+    const sub = document.createElement("span");
     sub.className = "thumb-sub";
     sub.textContent = `${index + 1}枚目 · ${formatBytes(card.size || 0)}`;
 
     body.append(name, sub);
+    select.append(figure, body);
+
+    const toggle = makeHideToggle(card, index);
 
     const actions = document.createElement("div");
     actions.className = "thumb-actions";
-    actions.append(
-      makeMiniButton("選", "この画像を表示", () => selectCard(index)),
-      makeMiniButton("×", "削除", () => removeCard(index), "danger"),
+    actions.append(toggle);
+
+    const remove = makeMiniButton("×", "削除", () => removeCard(index), "danger thumb-remove");
+
+    item.append(select, actions, remove);
+
+    const reorder = document.createElement("div");
+    reorder.className = "thumb-reorder";
+    reorder.append(
       makeMiniButton("↑", "前へ移動", () => moveCard(index, -1), "", index === 0),
       makeMiniButton("↓", "後ろへ移動", () => moveCard(index, 1), "", index === state.cards.length - 1),
     );
 
-    item.append(image, body, actions);
-    fragment.append(item);
+    const row = document.createElement("div");
+    row.className = "thumb-row";
+    row.append(item, reorder);
+    fragment.append(row);
   });
 
   els.thumbList.append(fragment);
+}
+
+function makeHideToggle(card, index) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `mini-button toggle${card.hidden ? " active" : ""}`;
+  button.innerHTML = card.hidden ? EYE_OFF_ICON : EYE_ICON;
+  button.title = card.hidden ? "プレビュー/PiPで表示する" : "プレビュー/PiPで非表示にする";
+  button.setAttribute("aria-label", card.hidden ? "再表示する" : "非表示にする");
+  button.addEventListener("click", () => toggleHidden(index));
+  return button;
 }
 
 function makeMiniButton(label, title, onClick, extraClass = "", disabled = false) {
@@ -590,6 +639,7 @@ function makeMiniButton(label, title, onClick, extraClass = "", disabled = false
 function updatePreview() {
   const card = getCurrentCard();
   const hasCards = Boolean(card);
+  const multipleVisible = getVisibleIndices().length > 1;
 
   els.emptyState.style.display = hasCards ? "none" : "block";
   els.previewImage.style.display = hasCards ? "block" : "none";
@@ -599,12 +649,16 @@ function updatePreview() {
   els.previewPipControls.style.display = hasCards ? "grid" : "none";
   applyPipControlClasses(els.previewPipControls);
 
+  if (!hasCards) {
+    updateEmptyState();
+  }
+
   if (hasCards) {
     els.previewImage.src = getObjectUrl(card);
     els.previewImage.alt = card.name;
     els.previewPipLabel.textContent = formatPipLabel(card);
-    els.previewPipPrev.disabled = state.cards.length <= 1;
-    els.previewPipNext.disabled = state.cards.length <= 1;
+    els.previewPipPrev.disabled = !multipleVisible;
+    els.previewPipNext.disabled = !multipleVisible;
   } else {
     els.previewImage.removeAttribute("src");
     els.previewImage.alt = "";
@@ -614,10 +668,27 @@ function updatePreview() {
   }
 }
 
+function updateEmptyState() {
+  const strong = els.emptyState.querySelector("strong");
+  const span = els.emptyState.querySelector("span");
+  if (!strong || !span) {
+    return;
+  }
+
+  if (state.cards.length === 0) {
+    strong.textContent = "攻略中に見たい画像を登録してください";
+    span.textContent = "PiP小窓の左右ボタン、またはこの画面の←→で切り替えできます。";
+  } else {
+    strong.textContent = "表示できる画像がありません";
+    span.textContent = "登録画像リストの目アイコンを押すと、非表示にした画像を再表示できます。";
+  }
+}
+
 function updateControls() {
   const hasCards = state.cards.length > 0;
+  const hasVisibleCards = getVisibleIndices().length > 0;
 
-  els.openPip.disabled = !hasCards || !("documentPictureInPicture" in window);
+  els.openPip.disabled = !hasVisibleCards || !("documentPictureInPicture" in window);
   els.clearAll.disabled = !hasCards;
 }
 
@@ -628,7 +699,12 @@ async function openPip() {
   }
 
   if (!getCurrentCard()) {
-    setStatus("PiPで表示する画像を登録してください。", true);
+    setStatus(
+      state.cards.length > 0
+        ? "表示できる画像がありません。リストの目アイコンで非表示を解除してください。"
+        : "PiPで表示する画像を登録してください。",
+      true,
+    );
     return;
   }
 
@@ -742,11 +818,24 @@ function updatePip() {
   const controls = pip.document.getElementById("pip-controls");
   const card = getCurrentCard();
 
-  if (!image || !label || !prev || !next || !controls || !shell || !card) {
+  if (!image || !label || !prev || !next || !controls || !shell) {
+    return;
+  }
+
+  if (!card) {
+    image.removeAttribute("src");
+    image.style.display = "none";
+    image.alt = "";
+    pip.document.title = formatPipDocumentTitle(null);
+    label.textContent =
+      state.cards.length > 0 ? "表示できる画像がありません" : "";
+    prev.disabled = true;
+    next.disabled = true;
     return;
   }
 
   image.src = getObjectUrl(card);
+  image.style.display = "block";
   image.alt = card.name;
   pip.document.title = formatPipDocumentTitle(card);
   image.classList.toggle("cover", state.settings.fitMode === "cover");
@@ -754,8 +843,9 @@ function updatePip() {
   shell.classList.toggle("auto-hide-controls", state.settings.pipControlsAutoHide);
   applyPipControlClasses(controls);
   label.textContent = formatPipLabel(card);
-  prev.disabled = state.cards.length <= 1;
-  next.disabled = state.cards.length <= 1;
+  const multipleVisible = getVisibleIndices().length > 1;
+  prev.disabled = !multipleVisible;
+  next.disabled = !multipleVisible;
 }
 
 function applyPipControlClasses(controls) {
@@ -786,7 +876,9 @@ function getPipControlsBackground() {
 }
 
 function formatPipLabel(card) {
-  return `${state.currentIndex + 1} / ${state.cards.length}　${formatPipName(card)}`;
+  const visible = getVisibleIndices();
+  const position = visible.indexOf(state.currentIndex);
+  return `${position === -1 ? 1 : position + 1} / ${visible.length}　${formatPipName(card)}`;
 }
 
 function formatPipDocumentTitle(card) {
@@ -802,24 +894,55 @@ function stripFileExtension(name) {
 }
 
 function selectCard(index) {
+  if (state.cards[index]?.hidden) {
+    return;
+  }
+
   state.currentIndex = index;
   render();
 }
 
 function previousCard() {
-  if (state.cards.length <= 1) {
-    return;
-  }
-  state.currentIndex = (state.currentIndex - 1 + state.cards.length) % state.cards.length;
-  render();
+  stepCard(-1);
 }
 
 function nextCard() {
-  if (state.cards.length <= 1) {
+  stepCard(1);
+}
+
+function stepCard(direction) {
+  const visible = getVisibleIndices();
+  if (visible.length <= 1) {
     return;
   }
-  state.currentIndex = (state.currentIndex + 1) % state.cards.length;
+
+  const position = visible.indexOf(state.currentIndex);
+  if (position === -1) {
+    state.currentIndex = visible[0];
+    render();
+    return;
+  }
+
+  const nextPosition = (position + direction + visible.length) % visible.length;
+  state.currentIndex = visible[nextPosition];
   render();
+}
+
+async function toggleHidden(index) {
+  const card = state.cards[index];
+  if (!card) {
+    return;
+  }
+
+  card.hidden = !card.hidden;
+  await putCard(card);
+  normalizeCurrentIndex();
+  render();
+  setStatus(
+    card.hidden
+      ? `「${card.name}」をプレビュー/PiPで非表示にしました。`
+      : `「${card.name}」を再表示しました。`,
+  );
 }
 
 async function removeCard(index) {
@@ -888,10 +1011,29 @@ function normalizeCurrentIndex() {
     return;
   }
   state.currentIndex = Math.min(Math.max(state.currentIndex, 0), state.cards.length - 1);
+
+  if (state.cards[state.currentIndex].hidden) {
+    const visible = getVisibleIndices();
+    if (visible.length > 0) {
+      const forward = visible.find((i) => i >= state.currentIndex);
+      state.currentIndex = forward ?? visible[visible.length - 1];
+    }
+  }
+}
+
+function getVisibleIndices() {
+  const indices = [];
+  state.cards.forEach((card, index) => {
+    if (!card.hidden) {
+      indices.push(index);
+    }
+  });
+  return indices;
 }
 
 function getCurrentCard() {
-  return state.cards[state.currentIndex] || null;
+  const card = state.cards[state.currentIndex];
+  return card && !card.hidden ? card : null;
 }
 
 function getObjectUrl(card) {
