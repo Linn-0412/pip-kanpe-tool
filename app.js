@@ -156,6 +156,7 @@ function bindEvents() {
     els.fileInput.value = "";
   });
 
+  document.addEventListener("paste", handlePaste);
   window.addEventListener("message", handleExtensionMessage);
 
   ["dragenter", "dragover"].forEach((name) => {
@@ -324,6 +325,36 @@ function bindEvents() {
   window.addEventListener("beforeunload", revokeAllObjectUrls);
 }
 
+async function handlePaste(event) {
+  if (!els.guideModal.hidden) {
+    return;
+  }
+
+  const clipboardData = event.clipboardData;
+  if (!clipboardData) {
+    setStatus("クリップボードを読み取れませんでした。画像をコピーしてからもう一度試してください。", true);
+    return;
+  }
+
+  const imageFiles = getClipboardImageFiles(clipboardData);
+  if (imageFiles.length === 0) {
+    if (isEditablePasteTarget(event.target)) {
+      return;
+    }
+
+    setStatus("クリップボードに画像が見つかりません。画像をコピーしてからCtrl+Vで貼り付けてください。", true);
+    return;
+  }
+
+  event.preventDefault();
+  await addFiles(imageFiles, {
+    sortFiles: false,
+    emptyMessage: "クリップボードに画像が見つかりません。画像をコピーしてからもう一度貼り付けてください。",
+    progressMessage: (count) => `${count}枚をクリップボードから追加中...`,
+    completeMessage: (count) => `${count}枚をクリップボードから追加しました。`,
+  });
+}
+
 function showGuideModal() {
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
   els.guideModal.hidden = false;
@@ -460,17 +491,87 @@ function getImageStore(mode) {
   return state.db.transaction(IMAGE_STORE, mode).objectStore(IMAGE_STORE);
 }
 
-async function addFiles(fileList) {
+function getClipboardImageFiles(clipboardData) {
+  const itemFiles = Array.from(clipboardData.items ?? [])
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter(isImageFile);
+
+  const files = itemFiles.length > 0 ? itemFiles : Array.from(clipboardData.files ?? []).filter(isImageFile);
+  return files.map((file, index) => toClipboardFile(file, index));
+}
+
+function toClipboardFile(file, index) {
+  const type = file.type || "image/png";
+  const name = getClipboardFileName(file, index);
+
+  return new File([file], name, {
+    type,
+    lastModified: Date.now() + index,
+  });
+}
+
+function getClipboardFileName(file, index) {
+  const name = typeof file.name === "string" ? file.name.trim() : "";
+  if (name && !isGenericClipboardFileName(name)) {
+    return name;
+  }
+
+  const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  const sequence = String(index + 1).padStart(2, "0");
+  return `clipboard-${timestamp}-${sequence}.${getImageExtension(file.type)}`;
+}
+
+function isGenericClipboardFileName(name) {
+  return /^(?:image|blob)(?:\.(?:png|jpe?g|gif|webp|bmp))?$/i.test(name);
+}
+
+function getImageExtension(type = "") {
+  const normalized = type.toLowerCase();
+  if (normalized === "image/jpeg") {
+    return "jpg";
+  }
+  if (normalized === "image/svg+xml") {
+    return "svg";
+  }
+
+  const match = normalized.match(/^image\/([a-z0-9.+-]+)$/);
+  return match ? match[1].replace("+xml", "") : "png";
+}
+
+function isImageFile(file) {
+  return Boolean(file) && typeof file.type === "string" && file.type.startsWith("image/");
+}
+
+function isEditablePasteTarget(target) {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  const editable = target.closest("[contenteditable]");
+  return target.matches("input, textarea") || Boolean(editable && editable.getAttribute("contenteditable") !== "false");
+}
+
+async function addFiles(fileList, options = {}) {
+  const {
+    sortFiles = true,
+    emptyMessage = "画像ファイルを選択してください。",
+    progressMessage = (count) => `${count}枚をファイル名順で追加中...`,
+    completeMessage = (count) => `${count}枚追加しました。`,
+  } = options;
+
   if (!state.db) {
     setStatus("保存領域の準備がまだ終わっていません。", true);
     return;
   }
 
-  const imageFiles = Array.from(fileList)
-    .filter((file) => file.type.startsWith("image/"))
-    .sort(compareFilesByName);
+  const imageFiles = Array.from(fileList).filter(isImageFile);
+  if (sortFiles) {
+    imageFiles.sort(compareFilesByName);
+  }
+
   if (imageFiles.length === 0) {
-    setStatus("画像ファイルを選択してください。", true);
+    setStatus(emptyMessage, true);
     return;
   }
 
@@ -484,10 +585,11 @@ async function addFiles(fileList) {
   if (accepted.length < imageFiles.length) {
     setStatus(`上限のため${accepted.length}枚だけ追加します。`, true);
   } else {
-    setStatus(`${accepted.length}枚をファイル名順で追加中...`);
+    setStatus(progressMessage(accepted.length));
   }
 
   const baseOrder = state.cards.length > 0 ? Math.max(...state.cards.map((card) => card.order)) + 1 : 0;
+  let addedCount = 0;
 
   for (const [index, file] of accepted.entries()) {
     try {
@@ -507,15 +609,20 @@ async function addFiles(fileList) {
 
       await putCard(card);
       state.cards.push(card);
+      addedCount += 1;
     } catch (error) {
       console.error(error);
       setStatus(`${file.name} の追加に失敗しました。`, true);
     }
   }
 
-  state.currentIndex = Math.max(0, state.cards.length - accepted.length);
+  state.currentIndex = Math.max(0, state.cards.length - addedCount);
   render();
-  setStatus(`${accepted.length}枚追加しました。`);
+  if (addedCount > 0) {
+    setStatus(completeMessage(addedCount));
+  } else {
+    setStatus("画像を追加できませんでした。", true);
+  }
 }
 
 function optimizeImage(file) {
