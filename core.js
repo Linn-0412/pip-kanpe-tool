@@ -4,55 +4,96 @@ export const PIP_CONTROL_BACKGROUND_CLASSES = ["background-solid", "background-t
 export const DEFAULT_PIP_CONTROL_SIZE = "medium";
 export const DEFAULT_PIP_CONTROL_POSITION = "bottom";
 export const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
+export const ALL_GROUP_ID = "all";
 
 const fileNameCollator = new Intl.Collator("ja", {
   numeric: true,
   sensitivity: "base",
 });
 
-export function getVisibleIndices(cards) {
+export function normalizeCardGroupIds(groupIds) {
+  if (Array.isArray(groupIds)) {
+    return [...new Set(groupIds.filter((groupId) => typeof groupId === "string" && groupId.length > 0))];
+  }
+
+  if (typeof groupIds === "string" && groupIds.length > 0) {
+    return [groupIds];
+  }
+
+  return [];
+}
+
+export function isAllGroup(groupId) {
+  return !groupId || groupId === ALL_GROUP_ID;
+}
+
+export function isCardInGroup(card, groupId = ALL_GROUP_ID) {
+  return Boolean(card) && (isAllGroup(groupId) || normalizeCardGroupIds(card.groupIds).includes(groupId));
+}
+
+export function getGroupIndices(cards, groupId = ALL_GROUP_ID) {
   const indices = [];
   cards.forEach((card, index) => {
-    if (!card.hidden) {
+    if (isCardInGroup(card, groupId)) {
       indices.push(index);
     }
   });
   return indices;
 }
 
-export function getCurrentCard(cards, index) {
-  const normalized = normalizeIndex(cards, index);
-  const card = cards[normalized];
-  return card && !card.hidden ? card : null;
+export function getVisibleIndices(cards, groupId = ALL_GROUP_ID) {
+  const indices = [];
+  cards.forEach((card, index) => {
+    if (!card.hidden && isCardInGroup(card, groupId)) {
+      indices.push(index);
+    }
+  });
+  return indices;
 }
 
-export function normalizeIndex(cards, index) {
+export function getCurrentCard(cards, index, groupId = ALL_GROUP_ID) {
+  const normalized = normalizeIndex(cards, index, groupId);
+  const card = cards[normalized];
+  return card && !card.hidden && isCardInGroup(card, groupId) ? card : null;
+}
+
+export function normalizeIndex(cards, index, groupId = ALL_GROUP_ID) {
   if (cards.length === 0) {
     return 0;
   }
 
   const safeIndex = Number.isFinite(index) ? Math.trunc(index) : 0;
   const boundedIndex = Math.min(Math.max(safeIndex, 0), cards.length - 1);
-  if (!cards[boundedIndex].hidden) {
+  if (!cards[boundedIndex].hidden && isCardInGroup(cards[boundedIndex], groupId)) {
     return boundedIndex;
   }
 
-  const visible = getVisibleIndices(cards);
+  const visible = getVisibleIndices(cards, groupId);
   if (visible.length === 0) {
-    return boundedIndex;
+    const groupIndices = getGroupIndices(cards, groupId);
+    if (groupIndices.length === 0) {
+      return 0;
+    }
+
+    if (isCardInGroup(cards[boundedIndex], groupId)) {
+      return boundedIndex;
+    }
+
+    const forwardGroupIndex = groupIndices.find((groupIndex) => groupIndex >= boundedIndex);
+    return forwardGroupIndex ?? groupIndices[groupIndices.length - 1];
   }
 
   const forward = visible.find((visibleIndex) => visibleIndex >= boundedIndex);
   return forward ?? visible[visible.length - 1];
 }
 
-export function step(cards, index, direction) {
-  const visible = getVisibleIndices(cards);
+export function step(cards, index, direction, groupId = ALL_GROUP_ID) {
+  const visible = getVisibleIndices(cards, groupId);
   if (visible.length === 0) {
-    return normalizeIndex(cards, index);
+    return normalizeIndex(cards, index, groupId);
   }
 
-  const normalized = normalizeIndex(cards, index);
+  const normalized = normalizeIndex(cards, index, groupId);
   const position = visible.indexOf(normalized);
   if (position === -1 || visible.length === 1 || direction === 0) {
     return position === -1 ? visible[0] : normalized;
@@ -87,14 +128,44 @@ export function toggleHidden(cards, index) {
   return cards.map((card, cardIndex) => (cardIndex === index ? { ...card, hidden: !card.hidden } : card));
 }
 
-export function formatPipLabel(cards, index, settings = {}) {
-  const normalized = normalizeIndex(cards, index);
-  const card = getCurrentCard(cards, normalized);
+export function toggleCardGroup(cards, index, groupId) {
+  if (isAllGroup(groupId)) {
+    return cards;
+  }
+
+  return cards.map((card, cardIndex) => {
+    if (cardIndex !== index) {
+      return card;
+    }
+
+    const groupIds = normalizeCardGroupIds(card.groupIds);
+    const nextGroupIds = groupIds.includes(groupId)
+      ? groupIds.filter((currentGroupId) => currentGroupId !== groupId)
+      : [...groupIds, groupId];
+
+    return { ...card, groupIds: nextGroupIds };
+  });
+}
+
+export function removeGroupFromCards(cards, groupId) {
+  if (isAllGroup(groupId)) {
+    return cards;
+  }
+
+  return cards.map((card) => ({
+    ...card,
+    groupIds: normalizeCardGroupIds(card.groupIds).filter((currentGroupId) => currentGroupId !== groupId),
+  }));
+}
+
+export function formatPipLabel(cards, index, settings = {}, groupId = ALL_GROUP_ID) {
+  const normalized = normalizeIndex(cards, index, groupId);
+  const card = getCurrentCard(cards, normalized, groupId);
   if (!card) {
     return "";
   }
 
-  const visible = getVisibleIndices(cards);
+  const visible = getVisibleIndices(cards, groupId);
   const position = visible.indexOf(normalized);
   return `${position === -1 ? 1 : position + 1} / ${visible.length}　${formatPipName(card, settings)}`;
 }

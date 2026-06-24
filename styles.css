@@ -217,6 +217,33 @@ h2 {
   font-size: 0.9rem;
 }
 
+.group-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.group-field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.group-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.group-panel small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
 .list-header {
   justify-content: space-between;
   padding-bottom: 0.75rem;
@@ -332,6 +359,38 @@ h2 {
   font-size: 0.8rem;
 }
 
+.thumb-groups {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.thumb-group-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.72rem;
+}
+
+.thumb-group-option.is-active {
+  color: var(--accent);
+  border-color: rgba(0, 209, 189, 0.45);
+}
+
+.thumb-group-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .thumb-actions {
   display: grid;
   grid-template-columns: 2rem;
@@ -413,6 +472,16 @@ h2 {
 select {
   min-height: 2.4rem;
   padding: 0 2rem 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #171717;
+}
+
+input[type="text"] {
+  min-height: 2.4rem;
+  min-width: 0;
+  padding: 0 0.75rem;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--text);

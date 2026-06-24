@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.3.0">
+    <link rel="stylesheet" href="./styles.css?v=1.4.0">
     <script type="module" src="./app.js?v=1.4.0"></script>
   </head>
   <body>
@@ -38,6 +38,23 @@
             <input id="optimize-images" type="checkbox" checked>
             <span>保存時に長辺2048pxへ軽量化</span>
           </label>
+        </div>
+
+        <div class="group-panel" aria-label="グループ管理">
+          <label class="group-field">
+            <span>表示グループ</span>
+            <select id="group-filter"></select>
+          </label>
+          <label class="group-field">
+            <span>グループ名</span>
+            <input id="group-name" type="text" maxlength="24" placeholder="例: 絶ケフカ 野良">
+          </label>
+          <div class="group-actions">
+            <button id="add-group" class="secondary-button" type="button">追加</button>
+            <button id="rename-group" class="secondary-button" type="button">名前変更</button>
+            <button id="delete-group" class="danger-button" type="button">削除</button>
+          </div>
+          <small>選択中のグループで画像を追加すると、そのグループに自動で入ります。</small>
         </div>
 
         <div class="list-header">
@@ -173,6 +190,10 @@
           <li>
             <strong>画像を登録</strong>
             <span>カンペ画像を複数選択、または画像追加エリアへドロップします。複数選択時はファイル名順で追加します。</span>
+          </li>
+          <li>
+            <strong>グループで分ける</strong>
+            <span>グループ名を入力して追加すると、画像を攻略や固定/野良ごとに絞り込めます。選択中のグループで画像を追加すると自動で所属し、既存画像はカード下のチェックで所属を切り替えられます。</span>
           </li>
           <li>
             <strong>順番を整える</strong>
