@@ -14,6 +14,9 @@ const DEFAULT_PIP_CONTROL_SIZE = "medium";
 const DEFAULT_PIP_CONTROL_POSITION = "bottom";
 const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
 
+const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
+
 const state = {
   db: null,
   cards: [],
@@ -555,9 +558,20 @@ function renderThumbList() {
     select.title = card.hidden ? "非表示中です（「表」で再表示）" : "この画像をプレビューに表示";
     select.addEventListener("click", () => selectCard(index));
 
+    const figure = document.createElement("span");
+    figure.className = "thumb-figure";
+
     const image = document.createElement("img");
     image.src = getObjectUrl(card);
     image.alt = "";
+    figure.append(image);
+
+    if (card.hidden) {
+      const badge = document.createElement("span");
+      badge.className = "thumb-badge";
+      badge.textContent = "非表示";
+      figure.append(badge);
+    }
 
     const body = document.createElement("span");
     body.className = "thumb-body";
@@ -570,21 +584,17 @@ function renderThumbList() {
     sub.textContent = `${index + 1}枚目 · ${formatBytes(card.size || 0)}`;
 
     body.append(name, sub);
-    select.append(image, body);
+    select.append(figure, body);
+
+    const toggle = makeHideToggle(card, index);
 
     const actions = document.createElement("div");
     actions.className = "thumb-actions";
-    actions.append(
-      makeMiniButton(
-        card.hidden ? "表" : "非",
-        card.hidden ? "プレビュー/PiPで表示する" : "プレビュー/PiPで非表示にする",
-        () => toggleHidden(index),
-        `toggle${card.hidden ? " active" : ""}`,
-      ),
-      makeMiniButton("×", "削除", () => removeCard(index), "danger"),
-    );
+    actions.append(toggle);
 
-    item.append(select, actions);
+    const remove = makeMiniButton("×", "削除", () => removeCard(index), "danger thumb-remove");
+
+    item.append(select, actions, remove);
 
     const reorder = document.createElement("div");
     reorder.className = "thumb-reorder";
@@ -600,6 +610,18 @@ function renderThumbList() {
   });
 
   els.thumbList.append(fragment);
+}
+
+function makeHideToggle(card, index) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `mini-button toggle${card.hidden ? " active" : ""}`;
+  button.innerHTML = card.hidden ? EYE_OFF_ICON : EYE_ICON;
+  button.title = card.hidden ? "プレビュー/PiPで表示する" : "プレビュー/PiPで非表示にする";
+  button.setAttribute("aria-pressed", String(card.hidden));
+  button.setAttribute("aria-label", card.hidden ? "再表示する" : "非表示にする");
+  button.addEventListener("click", () => toggleHidden(index));
+  return button;
 }
 
 function makeMiniButton(label, title, onClick, extraClass = "", disabled = false) {
@@ -657,7 +679,7 @@ function updateEmptyState() {
     span.textContent = "PiP小窓の左右ボタン、またはこの画面の←→で切り替えできます。";
   } else {
     strong.textContent = "表示できる画像がありません";
-    span.textContent = "登録画像リストの「表」を押すと、非表示にした画像を再表示できます。";
+    span.textContent = "登録画像リストの目アイコンを押すと、非表示にした画像を再表示できます。";
   }
 }
 
@@ -677,7 +699,7 @@ async function openPip() {
   if (!getCurrentCard()) {
     setStatus(
       state.cards.length > 0
-        ? "表示できる画像がありません。リストの「表」で非表示を解除してください。"
+        ? "表示できる画像がありません。リストの目アイコンで非表示を解除してください。"
         : "PiPで表示する画像を登録してください。",
       true,
     );
