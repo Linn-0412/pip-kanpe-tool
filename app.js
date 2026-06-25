@@ -192,7 +192,7 @@ function bindEvents() {
 
   els.previewPipPrev.addEventListener("click", previousCard);
   els.previewPipNext.addEventListener("click", nextCard);
-  els.previewPipControls.addEventListener("click", handlePipControlsHitAreaClick);
+  els.previewStage.addEventListener("click", handlePipControlsHitAreaClick);
   els.openPip.addEventListener("click", openPip);
   els.openGuide.addEventListener("click", showGuideModal);
   els.clearAll.addEventListener("click", clearAllCards);
@@ -1194,7 +1194,7 @@ function buildPipDocument() {
 
   prev.addEventListener("click", previousCard);
   next.addEventListener("click", nextCard);
-  controls.addEventListener("click", handlePipControlsHitAreaClick);
+  shell.addEventListener("click", handlePipControlsHitAreaClick);
   pip.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       previousCard();
@@ -1343,18 +1343,38 @@ function handlePipControlsHitAreaClick(event) {
     return;
   }
 
-  const controls = event.currentTarget;
-  if (!controls || typeof controls.getBoundingClientRect !== "function") {
+  const container = event.currentTarget;
+  if (!container || typeof container.getBoundingClientRect !== "function") {
     return;
   }
 
-  const rect = controls.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) {
+  const controls = container.querySelector(".pip-controls");
+  const previousButton = controls?.querySelector(".pip-button:first-of-type");
+  const nextButton = controls?.querySelector(".pip-button:last-of-type");
+  if (!controls || !previousButton || !nextButton || previousButton.disabled || nextButton.disabled) {
+    return;
+  }
+
+  const containerRect = container.getBoundingClientRect();
+  const previousRect = previousButton.getBoundingClientRect();
+  const nextRect = nextButton.getBoundingClientRect();
+  if (
+    containerRect.width <= 0 ||
+    containerRect.height <= 0 ||
+    previousRect.width <= 0 ||
+    nextRect.width <= 0
+  ) {
     return;
   }
 
   if (isVerticalPipControls()) {
-    if (event.clientY < rect.top + rect.height / 2) {
+    const laneLeft = Math.min(previousRect.left, nextRect.left);
+    const laneRight = Math.max(previousRect.right, nextRect.right);
+    if (event.clientX < laneLeft || event.clientX > laneRight) {
+      return;
+    }
+
+    if (event.clientY < containerRect.top + containerRect.height / 2) {
       previousCard();
     } else {
       nextCard();
@@ -1362,9 +1382,9 @@ function handlePipControlsHitAreaClick(event) {
     return;
   }
 
-  if (event.clientX < rect.left + rect.width / 2) {
+  if (event.clientX >= previousRect.left && event.clientX <= previousRect.right) {
     previousCard();
-  } else {
+  } else if (event.clientX >= nextRect.left && event.clientX <= nextRect.right) {
     nextCard();
   }
 }

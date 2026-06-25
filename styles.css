@@ -1034,8 +1034,21 @@ body.pip-body {
 .pip-controls.full-height-buttons {
   inset: 0;
   transform: none;
+  align-content: end;
   background: transparent;
   pointer-events: auto;
+}
+
+.pip-controls.full-height-buttons.top {
+  align-content: start;
+}
+
+.pip-controls.full-height-buttons.middle {
+  align-content: center;
+}
+
+.pip-controls.full-height-buttons.bottom {
+  align-content: end;
 }
 
 .pip-controls.separate.full-height-buttons {
@@ -1056,7 +1069,7 @@ body.pip-body {
 }
 
 .pip-controls.full-height-buttons .pip-button {
-  height: 100%;
+  height: var(--pip-control-button-height);
 }
 
 .pip-controls.full-height-buttons:not(.vertical) .pip-label {
@@ -1073,7 +1086,7 @@ body.pip-body {
 }
 
 .pip-controls.vertical.full-height-buttons {
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: var(--pip-control-button-height) var(--pip-control-button-height);
 }
 
 .pip-controls.vertical.full-height-buttons .pip-label {
