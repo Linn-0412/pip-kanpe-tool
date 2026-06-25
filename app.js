@@ -895,6 +895,8 @@ function renderThumbList() {
     const image = document.createElement("img");
     image.src = getObjectUrl(card);
     image.alt = "";
+    image.loading = "lazy";
+    image.decoding = "async";
     figure.append(image);
 
     if (card.hidden) {
