@@ -900,6 +900,39 @@ body.pip-body {
   --pip-control-label-font-size: 1rem;
 }
 
+.pip-controls.vertical {
+  grid-template-columns: var(--pip-control-button-width) minmax(0, 1fr);
+  grid-template-rows: var(--pip-control-button-height) var(--pip-control-button-height);
+}
+
+.pip-controls.vertical-right {
+  grid-template-columns: minmax(0, 1fr) var(--pip-control-button-width);
+}
+
+.pip-controls.vertical .pip-button:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.pip-controls.vertical .pip-button:last-child {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.pip-controls.vertical .pip-label {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.pip-controls.vertical-right .pip-button:first-child,
+.pip-controls.vertical-right .pip-button:last-child {
+  grid-column: 2;
+}
+
+.pip-controls.vertical-right .pip-label {
+  grid-column: 1;
+}
+
 .preview-pip-controls {
   z-index: 2;
 }
@@ -966,6 +999,16 @@ body.pip-body {
 
 .pip-controls.label-hidden .pip-label {
   display: none;
+}
+
+.pip-controls.vertical.label-hidden {
+  grid-template-columns: var(--pip-control-button-width);
+  grid-template-rows: var(--pip-control-button-height) var(--pip-control-button-height);
+  justify-content: start;
+}
+
+.pip-controls.vertical-right.label-hidden {
+  justify-content: end;
 }
 
 .pip-controls.background-translucent.top {
