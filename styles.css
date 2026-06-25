@@ -956,6 +956,11 @@ body.pip-body {
   inset: 0 0 auto;
 }
 
+.auto-hide-controls .pip-controls.separate.middle {
+  inset: 50% 0 auto;
+  transform: translateY(-50%);
+}
+
 .auto-hide-controls .pip-controls.separate.bottom {
   inset: auto 0 0;
 }
@@ -963,6 +968,12 @@ body.pip-body {
 .pip-controls.top {
   inset: 0 0 auto;
   background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.78));
+}
+
+.pip-controls.middle {
+  inset: 50% 0 auto;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.78);
 }
 
 .pip-controls.bottom {
@@ -981,6 +992,15 @@ body.pip-body {
 
 .pip-controls.separate.top {
   order: -1;
+}
+
+.pip-controls.separate.middle {
+  position: absolute;
+  inset: 50% 0 auto;
+  width: auto;
+  margin: 0;
+  order: initial;
+  transform: translateY(-50%);
 }
 
 .pip-controls.separate.bottom {
@@ -1013,6 +1033,7 @@ body.pip-body {
 
 .pip-controls.full-height-buttons {
   inset: 0;
+  transform: none;
   background: transparent;
   pointer-events: none;
 }
@@ -1022,6 +1043,11 @@ body.pip-body {
   width: auto;
   margin: 0;
   order: initial;
+}
+
+.pip-controls.middle.full-height-buttons {
+  inset: 0;
+  transform: none;
 }
 
 .pip-controls.full-height-buttons .pip-button,
@@ -1042,6 +1068,10 @@ body.pip-body {
   align-self: start;
 }
 
+.pip-controls.full-height-buttons.middle:not(.vertical) .pip-label {
+  align-self: center;
+}
+
 .pip-controls.vertical.full-height-buttons {
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 }
@@ -1055,8 +1085,16 @@ body.pip-body {
   align-self: start;
 }
 
+.pip-controls.vertical.full-height-buttons.middle .pip-label {
+  align-self: center;
+}
+
 .pip-controls.background-translucent.top {
   background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.38));
+}
+
+.pip-controls.background-translucent.middle {
+  background: rgba(0, 0, 0, 0.38);
 }
 
 .pip-controls.background-translucent.bottom {
@@ -1068,6 +1106,7 @@ body.pip-body {
 }
 
 .pip-controls.background-clear.top,
+.pip-controls.background-clear.middle,
 .pip-controls.background-clear.bottom,
 .pip-controls.background-clear.separate {
   background: transparent;

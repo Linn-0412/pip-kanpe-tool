@@ -133,6 +133,7 @@ test("PiP control resolvers fall back to defaults", () => {
   assert.equal(resolvePipControlsSize({ pipControlsSize: "large" }), "large");
   assert.equal(resolvePipControlsSize({ pipControlsSize: "giant" }), "medium");
   assert.equal(resolvePipControlsPosition({ pipControlsPosition: "top" }), "top");
+  assert.equal(resolvePipControlsPosition({ pipControlsPosition: "middle" }), "middle");
   assert.equal(resolvePipControlsPosition({ pipControlsPosition: "center" }), "bottom");
   assert.equal(resolvePipControlsBackground({ pipControlsBackground: "clear" }), "background-clear");
   assert.equal(resolvePipControlsBackground({ pipControlsBackground: "background-translucent" }), "background-translucent");

@@ -122,6 +122,7 @@ function bindElements() {
     "pip-controls-placement-vertical-right",
     "pip-controls-full-height-buttons",
     "pip-controls-position-top",
+    "pip-controls-position-middle",
     "pip-controls-position-bottom",
     "pip-controls-background-solid",
     "pip-controls-background-translucent",
@@ -233,7 +234,7 @@ function bindEvents() {
     });
   });
 
-  [els.pipControlsPositionTop, els.pipControlsPositionBottom].forEach((radio) => {
+  [els.pipControlsPositionTop, els.pipControlsPositionMiddle, els.pipControlsPositionBottom].forEach((radio) => {
     radio.addEventListener("change", () => {
       if (!radio.checked) {
         return;
@@ -1533,6 +1534,7 @@ function applySettingsToControls() {
   els.pipControlsPlacementVerticalRight.checked = pipControlsPlacement === "vertical-right";
   els.pipControlsFullHeightButtons.checked = state.settings.pipControlsFullHeightButtons === true;
   els.pipControlsPositionTop.checked = pipControlsPosition === "top";
+  els.pipControlsPositionMiddle.checked = pipControlsPosition === "middle";
   els.pipControlsPositionBottom.checked = pipControlsPosition === "bottom";
   els.pipControlsBackgroundSolid.checked = pipControlsBackground === "background-solid";
   els.pipControlsBackgroundTranslucent.checked = pipControlsBackground === "background-translucent";
