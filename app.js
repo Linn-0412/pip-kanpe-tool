@@ -192,6 +192,7 @@ function bindEvents() {
 
   els.previewPipPrev.addEventListener("click", previousCard);
   els.previewPipNext.addEventListener("click", nextCard);
+  els.previewPipControls.addEventListener("click", handlePipControlsHitAreaClick);
   els.openPip.addEventListener("click", openPip);
   els.openGuide.addEventListener("click", showGuideModal);
   els.clearAll.addEventListener("click", clearAllCards);
@@ -1193,6 +1194,7 @@ function buildPipDocument() {
 
   prev.addEventListener("click", previousCard);
   next.addEventListener("click", nextCard);
+  controls.addEventListener("click", handlePipControlsHitAreaClick);
   pip.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       previousCard();
@@ -1329,6 +1331,42 @@ function updatePipButtonLabels(prev, next) {
   const vertical = isVerticalPipControls();
   prev.textContent = vertical ? "↑" : "←";
   next.textContent = vertical ? "↓" : "→";
+}
+
+function handlePipControlsHitAreaClick(event) {
+  if (state.settings.pipControlsFullHeightButtons !== true || getVisibleIndices().length <= 1) {
+    return;
+  }
+
+  const target = event.target;
+  if (target && typeof target.closest === "function" && target.closest(".pip-button")) {
+    return;
+  }
+
+  const controls = event.currentTarget;
+  if (!controls || typeof controls.getBoundingClientRect !== "function") {
+    return;
+  }
+
+  const rect = controls.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return;
+  }
+
+  if (isVerticalPipControls()) {
+    if (event.clientY < rect.top + rect.height / 2) {
+      previousCard();
+    } else {
+      nextCard();
+    }
+    return;
+  }
+
+  if (event.clientX < rect.left + rect.width / 2) {
+    previousCard();
+  } else {
+    nextCard();
+  }
 }
 
 function formatPipDocumentTitle(card) {
