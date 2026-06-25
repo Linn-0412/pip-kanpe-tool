@@ -956,10 +956,11 @@ function renderThumbList() {
     select.append(figure, body);
 
     const toggle = makeHideToggle(card, index);
+    const rename = makeMiniButton("名", "名前変更", () => renameCard(index), "thumb-rename");
 
     const actions = document.createElement("div");
     actions.className = "thumb-actions";
-    actions.append(toggle);
+    actions.append(toggle, rename);
 
     const remove = makeMiniButton("×", "削除", () => removeCard(index), "danger thumb-remove");
 
@@ -1002,6 +1003,7 @@ function makeMiniButton(label, title, onClick, extraClass = "", disabled = false
   button.className = `mini-button ${extraClass}`.trim();
   button.textContent = label;
   button.title = title;
+  button.setAttribute("aria-label", title);
   button.disabled = disabled;
   button.addEventListener("click", onClick);
   return button;
@@ -1441,6 +1443,40 @@ async function toggleHidden(index) {
       ? `「${updatedCard.name}」をプレビュー/PiPで非表示にしました。`
       : `「${updatedCard.name}」を再表示しました。`,
   );
+}
+
+async function renameCard(index) {
+  const card = state.cards[index];
+  if (!card) {
+    return;
+  }
+
+  const nextName = window.prompt("画像名を入力してください。", card.name);
+  if (nextName === null) {
+    return;
+  }
+
+  const name = nextName.trim();
+  if (!name) {
+    setStatus("画像名を入力してください。", true);
+    return;
+  }
+
+  if (name === card.name) {
+    return;
+  }
+
+  const updatedCard = { ...card, name };
+  try {
+    await putCard(updatedCard);
+    state.cards = state.cards.map((currentCard, cardIndex) => (cardIndex === index ? updatedCard : currentCard));
+    render();
+    updatePip();
+    setStatus(`画像名を「${name}」に変更しました。`);
+  } catch (error) {
+    console.error(error);
+    setStatus("画像名を変更できませんでした。", true);
+  }
 }
 
 async function removeCard(index) {

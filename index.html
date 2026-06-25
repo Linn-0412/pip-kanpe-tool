@@ -107,106 +107,109 @@
           </label>
         </div>
 
-        <div class="settings-row pip-settings">
-          <div class="settings-stack">
-            <span class="settings-title">矢印と画像名の表示位置</span>
-            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の表示位置">
+        <details class="group-settings advanced-settings">
+          <summary>PiP詳細設定</summary>
+          <div class="settings-row pip-settings">
+            <div class="settings-stack">
+              <span class="settings-title">矢印と画像名の表示位置</span>
+              <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の表示位置">
+                <label class="check-option">
+                  <input id="pip-controls-position-top" type="radio" name="pip-controls-position" value="top">
+                  <span>上部</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-position-middle" type="radio" name="pip-controls-position" value="middle">
+                  <span>中央</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-position-bottom" type="radio" name="pip-controls-position" value="bottom">
+                  <span>下部</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-stack">
+              <span class="settings-title">矢印と画像名の大きさ</span>
+              <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の大きさ">
+                <label class="check-option">
+                  <input id="pip-controls-size-small" type="radio" name="pip-controls-size" value="small">
+                  <span>小</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-size-medium" type="radio" name="pip-controls-size" value="medium" checked>
+                  <span>中</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-size-large" type="radio" name="pip-controls-size" value="large">
+                  <span>大</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-stack">
+              <span class="settings-title">矢印ボタンの配置</span>
+              <div class="settings-choice-group" role="radiogroup" aria-label="矢印ボタンの配置">
+                <label class="check-option">
+                  <input id="pip-controls-placement-horizontal" type="radio" name="pip-controls-placement" value="horizontal" checked>
+                  <span>横並び</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-placement-vertical-left" type="radio" name="pip-controls-placement" value="vertical-left">
+                  <span>左に縦並び</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-placement-vertical-right" type="radio" name="pip-controls-placement" value="vertical-right">
+                  <span>右に縦並び</span>
+                </label>
+              </div>
               <label class="check-option">
-                <input id="pip-controls-position-top" type="radio" name="pip-controls-position" value="top">
-                <span>上部</span>
+                <input id="pip-controls-full-height-buttons" type="checkbox">
+                <span>矢印の当たり判定を縦いっぱいにする</span>
               </label>
+            </div>
+
+            <div class="settings-stack">
+              <span class="settings-title">背景の濃さ</span>
+              <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の背景の濃さ">
+                <label class="check-option">
+                  <input id="pip-controls-background-solid" type="radio" name="pip-controls-background" value="solid" checked>
+                  <span>通常</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-background-translucent" type="radio" name="pip-controls-background" value="translucent">
+                  <span>薄め</span>
+                </label>
+                <label class="check-option">
+                  <input id="pip-controls-background-clear" type="radio" name="pip-controls-background" value="clear">
+                  <span>透明</span>
+                </label>
+              </div>
+              <small class="settings-hint">透明は画像に重ねると効果が見えます。</small>
+            </div>
+
+            <div class="settings-stack">
               <label class="check-option">
-                <input id="pip-controls-position-middle" type="radio" name="pip-controls-position" value="middle">
-                <span>中央</span>
+                <input id="pip-controls-separate" type="checkbox" checked>
+                <span>コントロールパネルを画像に重ねない</span>
               </label>
+
               <label class="check-option">
-                <input id="pip-controls-position-bottom" type="radio" name="pip-controls-position" value="bottom">
-                <span>下部</span>
+                <input id="pip-controls-auto-hide" type="checkbox" checked>
+                <span>マウス操作時だけ表示する</span>
+              </label>
+
+              <label class="check-option">
+                <input id="show-pip-label" type="checkbox" checked>
+                <span>画像名と枚数を表示する</span>
+              </label>
+
+              <label class="check-option">
+                <input id="show-file-extension" type="checkbox">
+                <span>画像名の拡張子を表示する</span>
               </label>
             </div>
           </div>
-
-          <div class="settings-stack">
-            <span class="settings-title">矢印と画像名の大きさ</span>
-            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の大きさ">
-              <label class="check-option">
-                <input id="pip-controls-size-small" type="radio" name="pip-controls-size" value="small">
-                <span>小</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-size-medium" type="radio" name="pip-controls-size" value="medium" checked>
-                <span>中</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-size-large" type="radio" name="pip-controls-size" value="large">
-                <span>大</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="settings-stack">
-            <span class="settings-title">矢印ボタンの配置</span>
-            <div class="settings-choice-group" role="radiogroup" aria-label="矢印ボタンの配置">
-              <label class="check-option">
-                <input id="pip-controls-placement-horizontal" type="radio" name="pip-controls-placement" value="horizontal" checked>
-                <span>横並び</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-placement-vertical-left" type="radio" name="pip-controls-placement" value="vertical-left">
-                <span>左に縦並び</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-placement-vertical-right" type="radio" name="pip-controls-placement" value="vertical-right">
-                <span>右に縦並び</span>
-              </label>
-            </div>
-            <label class="check-option">
-              <input id="pip-controls-full-height-buttons" type="checkbox">
-              <span>矢印の当たり判定を縦いっぱいにする</span>
-            </label>
-          </div>
-
-          <div class="settings-stack">
-            <span class="settings-title">背景の濃さ</span>
-            <div class="settings-choice-group" role="radiogroup" aria-label="矢印と画像名の背景の濃さ">
-              <label class="check-option">
-                <input id="pip-controls-background-solid" type="radio" name="pip-controls-background" value="solid" checked>
-                <span>通常</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-background-translucent" type="radio" name="pip-controls-background" value="translucent">
-                <span>薄め</span>
-              </label>
-              <label class="check-option">
-                <input id="pip-controls-background-clear" type="radio" name="pip-controls-background" value="clear">
-                <span>透明</span>
-              </label>
-            </div>
-            <small class="settings-hint">透明は画像に重ねると効果が見えます。</small>
-          </div>
-
-          <div class="settings-stack">
-            <label class="check-option">
-              <input id="pip-controls-separate" type="checkbox" checked>
-              <span>コントロールパネルを画像に重ねない</span>
-            </label>
-
-            <label class="check-option">
-              <input id="pip-controls-auto-hide" type="checkbox" checked>
-              <span>マウス操作時だけ表示する</span>
-            </label>
-
-            <label class="check-option">
-              <input id="show-pip-label" type="checkbox" checked>
-              <span>画像名と枚数を表示する</span>
-            </label>
-
-            <label class="check-option">
-              <input id="show-file-extension" type="checkbox">
-              <span>画像名の拡張子を表示する</span>
-            </label>
-          </div>
-        </div>
+        </details>
 
         <p id="status-line" class="status-line" role="status"></p>
       </section>
