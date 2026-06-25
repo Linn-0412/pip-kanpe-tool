@@ -27,6 +27,7 @@ import {
   toggleHidden as toggleHiddenCards,
 } from "./core.js";
 
+// 主要な制限値と保存先。枚数上限やDB名を変えるforkはまずここを見る。
 const MAX_CARDS = 80;
 const DB_NAME = "pip-kanpe-tool";
 const DB_VERSION = 1;
@@ -40,6 +41,7 @@ const PIP_CONTROL_BEHAVIOR_CLASSES = ["full-height-buttons"];
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
 
+// メモリ上の唯一の状態。IndexedDBの画像本体、localStorageの設定、PiP小窓をここで束ねる。
 const state = {
   db: null,
   cards: [],
@@ -69,6 +71,7 @@ const els = {};
 
 window.addEventListener("DOMContentLoaded", init);
 
+// 起動時にDOM、設定、IndexedDBを準備して初回描画する。
 async function init() {
   bindElements();
   bindEvents();
@@ -88,6 +91,7 @@ async function init() {
   }
 }
 
+// HTMLのidをcamelCase化してelsへ集約する。イベント側でquerySelectorを散らさないための入口。
 function bindElements() {
   const ids = [
     "support-badge",
@@ -143,6 +147,7 @@ function bindElements() {
   });
 }
 
+// 画面操作をすべてここで結線する。設定変更は保存、プレビュー、PiP更新を同時に走らせる。
 function bindEvents() {
   els.pickFiles.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -371,6 +376,7 @@ function bindEvents() {
   window.addEventListener("beforeunload", revokeAllObjectUrls);
 }
 
+// Ctrl+Vで受け取った画像をFileとして扱い、通常のファイル追加処理へ流す。
 async function handlePaste(event) {
   if (!els.guideModal.hidden) {
     return;
@@ -438,6 +444,7 @@ async function copyGuideUrl(button) {
   }, 1600);
 }
 
+// Chrome拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
 function handleExtensionMessage(event) {
   if (event.source !== window || event.origin !== window.location.origin) {
     return;
@@ -467,6 +474,7 @@ function updateSupportBadge() {
   els.openPip.disabled = !supported;
 }
 
+// 画像本体はIndexedDBに保存する。サーバーへアップロードしないための中核。
 function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -537,6 +545,7 @@ function getImageStore(mode) {
   return state.db.transaction(IMAGE_STORE, mode).objectStore(IMAGE_STORE);
 }
 
+// クリップボード画像は名前が汎用的になりがちなので、後から見分けやすい連番名を補う。
 function getClipboardImageFiles(clipboardData) {
   const itemFiles = Array.from(clipboardData.items ?? [])
     .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
@@ -598,6 +607,7 @@ function isEditablePasteTarget(target) {
   return target.matches("input, textarea") || Boolean(editable && editable.getAttribute("contenteditable") !== "false");
 }
 
+// ファイル選択、ドラッグ&ドロップ、クリップボード貼り付けを共通の登録処理にまとめる。
 async function addFiles(fileList, options = {}) {
   const {
     sortFiles = true,
@@ -671,6 +681,7 @@ async function addFiles(fileList, options = {}) {
   }
 }
 
+// 大量登録時の保存容量とサムネイル負荷を抑える。元より重くなる場合は元ファイルを残す。
 function optimizeImage(file) {
   return new Promise((resolve) => {
     const image = new Image();
@@ -720,6 +731,7 @@ function optimizeImage(file) {
   });
 }
 
+// 状態変更後の再描画入口。カード一覧、プレビュー、PiPを同じ状態から同期する。
 function render() {
   normalizeCurrentIndex();
   renderGroupControls();
@@ -730,6 +742,7 @@ function render() {
   updatePip();
 }
 
+// グループは画像本体ではなく設定とcard.groupIdsで管理する。画像削除とは独立している。
 function renderGroupControls() {
   normalizeSettingsGroups();
 
@@ -758,6 +771,7 @@ function renderGroupControls() {
   els.deleteGroup.disabled = !groupSelected;
 }
 
+// 過去バージョンや手編集されたlocalStorageでも壊れないようにグループ設定を正規化する。
 function normalizeSettingsGroups() {
   const groups = Array.isArray(state.settings.groups) ? state.settings.groups : [];
   const seen = new Set();
@@ -889,6 +903,7 @@ function renderDeckMeta() {
   els.deckMeta.textContent = `${countLabel} · ${formatBytes(totalSize)}${hiddenLabel}`;
 }
 
+// サムネイル一覧は現在の表示グループだけを描画する。非表示画像は選択対象から外す。
 function renderThumbList() {
   els.thumbList.textContent = "";
 
@@ -1052,6 +1067,7 @@ async function updateCardGroup(index, groupId) {
   setStatus(`「${updatedCard.name}」のグループを更新しました。`);
 }
 
+// プレビューは通常画面側の確認用。PiPと同じCSSクラスを使って見た目の差を減らす。
 function updatePreview() {
   const card = getCurrentCard();
   const hasCards = Boolean(card);
@@ -1112,6 +1128,7 @@ function updateControls() {
   els.clearAll.disabled = !hasCards;
 }
 
+// Document Picture-in-Pictureを開く。失敗時はユーザー操作から再試行してもらう。
 async function openPip() {
   if (!("documentPictureInPicture" in window)) {
     setStatus("このブラウザはDocument Picture-in-Pictureに対応していません。", true);
@@ -1149,6 +1166,7 @@ async function openPip() {
   }
 }
 
+// PiPは別documentなので、必要なDOMとCSSを小窓側に作り直す。
 function buildPipDocument() {
   const pip = state.pipWindow;
   if (!pip || pip.closed) {
@@ -1210,6 +1228,7 @@ function buildPipDocument() {
   });
 }
 
+// 同一オリジンでもPiP側documentにはCSSが自動継承されないため、pip関連ルールをコピーする。
 function getPipCss() {
   const cssRules = [];
   for (const sheet of document.styleSheets) {
@@ -1226,6 +1245,7 @@ function getPipCss() {
   return cssRules.join("\n");
 }
 
+// 現在のカード、表示設定、ボタン状態をPiP小窓へ反映する。
 function updatePip() {
   const pip = state.pipWindow;
   if (!pip || pip.closed) {
@@ -1275,6 +1295,7 @@ function updatePip() {
   next.disabled = !multipleVisible;
 }
 
+// 設定値をCSSクラスへ変換する。PiPとプレビューが同じ関数を使うのが重要。
 function applyPipControlClasses(controls) {
   controls.classList.remove(
     ...PIP_CONTROL_SIZE_CLASSES,
@@ -1335,6 +1356,7 @@ function updatePipButtonLabels(prev, next) {
   next.textContent = vertical ? "↓" : "→";
 }
 
+// 「縦いっぱい」のクリック判定。見た目のボタンは小さいまま、矢印レーンだけを広く扱う。
 function handlePipControlsHitAreaClick(event) {
   if (state.settings.pipControlsFullHeightButtons !== true || getVisibleIndices().length <= 1) {
     return;
@@ -1399,6 +1421,7 @@ function formatPipName(card) {
   return formatCorePipName(card, state.settings);
 }
 
+// カード操作はIndexedDB更新後にrender()へ戻す。表示中のPiPもrender()経由で同期される。
 function selectCard(index) {
   const card = state.cards[index];
   if (!card || card.hidden || !isCardInGroup(card, state.settings.activeGroupId)) {
@@ -1512,6 +1535,7 @@ async function moveCard(index, direction) {
   render();
 }
 
+// 表示グループ内の並び替えは、全体配列の相対順を入れ替えて保存する。
 function reorderCardInActiveGroup(index, direction) {
   const groupIndices = getGroupIndices();
   const groupPosition = groupIndices.indexOf(index);
@@ -1574,6 +1598,7 @@ function getCurrentCard() {
   return getCurrentVisibleCard(state.cards, state.currentIndex, state.settings.activeGroupId);
 }
 
+// 画像プレビュー用のObject URLは使い回し、削除や画面離脱で解放する。
 function getObjectUrl(card) {
   if (!state.objectUrls.has(card.id)) {
     state.objectUrls.set(card.id, URL.createObjectURL(card.blob));
@@ -1596,6 +1621,7 @@ function revokeAllObjectUrls() {
   state.objectUrls.clear();
 }
 
+// 設定はlocalStorage保存。画像本体とは分けて、軽く読み書きできるようにする。
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -1613,6 +1639,7 @@ function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
 }
 
+// 保存済み設定をフォームへ反映する。初回ガイド表示の判定もここで行う。
 function applySettingsToControls() {
   els.fitMode.value = state.settings.fitMode;
   els.pipSize.value = state.settings.pipSize;
