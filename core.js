@@ -159,6 +159,10 @@ export function removeGroupFromCards(cards, groupId) {
 }
 
 export function formatPipLabel(cards, index, settings = {}, groupId = ALL_GROUP_ID) {
+  if (settings.showPipLabel === false) {
+    return "";
+  }
+
   const normalized = normalizeIndex(cards, index, groupId);
   const card = getCurrentCard(cards, normalized, groupId);
   if (!card) {
