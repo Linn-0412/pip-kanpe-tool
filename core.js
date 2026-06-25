@@ -1,5 +1,5 @@
 export const PIP_CONTROL_SIZE_CLASSES = ["small", "medium", "large"];
-export const PIP_CONTROL_POSITION_CLASSES = ["top", "bottom"];
+export const PIP_CONTROL_POSITION_CLASSES = ["top", "middle", "bottom"];
 export const PIP_CONTROL_BACKGROUND_CLASSES = ["background-solid", "background-translucent", "background-clear"];
 export const DEFAULT_PIP_CONTROL_SIZE = "medium";
 export const DEFAULT_PIP_CONTROL_POSITION = "bottom";
