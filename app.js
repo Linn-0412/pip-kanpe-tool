@@ -35,6 +35,7 @@ const SETTINGS_KEY = "pip-kanpe-settings";
 const PIP_CONTROL_PLACEMENTS = ["horizontal", "vertical-left", "vertical-right"];
 const DEFAULT_PIP_CONTROL_PLACEMENT = "horizontal";
 const PIP_CONTROL_PLACEMENT_CLASSES = ["horizontal", "vertical", "vertical-left", "vertical-right"];
+const PIP_CONTROL_BEHAVIOR_CLASSES = ["full-height-buttons"];
 
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
@@ -50,6 +51,7 @@ const state = {
     pipSize: "640x360",
     pipControlsSize: DEFAULT_PIP_CONTROL_SIZE,
     pipControlsPlacement: DEFAULT_PIP_CONTROL_PLACEMENT,
+    pipControlsFullHeightButtons: false,
     pipControlsPosition: DEFAULT_PIP_CONTROL_POSITION,
     pipControlsBackground: DEFAULT_PIP_CONTROL_BACKGROUND,
     pipControlsSeparateFromImage: true,
@@ -118,6 +120,7 @@ function bindElements() {
     "pip-controls-placement-horizontal",
     "pip-controls-placement-vertical-left",
     "pip-controls-placement-vertical-right",
+    "pip-controls-full-height-buttons",
     "pip-controls-position-top",
     "pip-controls-position-bottom",
     "pip-controls-background-solid",
@@ -258,6 +261,13 @@ function bindEvents() {
       updatePreview();
       updatePip();
     });
+  });
+
+  els.pipControlsFullHeightButtons.addEventListener("change", () => {
+    state.settings.pipControlsFullHeightButtons = els.pipControlsFullHeightButtons.checked;
+    saveSettings();
+    updatePreview();
+    updatePip();
   });
 
   [els.pipControlsBackgroundSolid, els.pipControlsBackgroundTranslucent, els.pipControlsBackgroundClear].forEach(
@@ -1264,6 +1274,7 @@ function applyPipControlClasses(controls) {
   controls.classList.remove(
     ...PIP_CONTROL_SIZE_CLASSES,
     ...PIP_CONTROL_PLACEMENT_CLASSES,
+    ...PIP_CONTROL_BEHAVIOR_CLASSES,
     ...PIP_CONTROL_POSITION_CLASSES,
     ...PIP_CONTROL_BACKGROUND_CLASSES,
   );
@@ -1274,6 +1285,7 @@ function applyPipControlClasses(controls) {
     getPipControlsBackground(),
   );
   controls.classList.toggle("vertical", isVerticalPipControls());
+  controls.classList.toggle("full-height-buttons", state.settings.pipControlsFullHeightButtons === true);
   controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
   controls.classList.toggle("label-hidden", !shouldShowPipLabel());
 }
@@ -1519,6 +1531,7 @@ function applySettingsToControls() {
   els.pipControlsPlacementHorizontal.checked = pipControlsPlacement === "horizontal";
   els.pipControlsPlacementVerticalLeft.checked = pipControlsPlacement === "vertical-left";
   els.pipControlsPlacementVerticalRight.checked = pipControlsPlacement === "vertical-right";
+  els.pipControlsFullHeightButtons.checked = state.settings.pipControlsFullHeightButtons === true;
   els.pipControlsPositionTop.checked = pipControlsPosition === "top";
   els.pipControlsPositionBottom.checked = pipControlsPosition === "bottom";
   els.pipControlsBackgroundSolid.checked = pipControlsBackground === "background-solid";
