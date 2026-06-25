@@ -1011,6 +1011,50 @@ body.pip-body {
   justify-content: end;
 }
 
+.pip-controls.full-height-buttons {
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.pip-controls.separate.full-height-buttons {
+  position: absolute;
+  width: auto;
+  margin: 0;
+  order: initial;
+}
+
+.pip-controls.full-height-buttons .pip-button,
+.pip-controls.full-height-buttons .pip-label {
+  pointer-events: auto;
+}
+
+.pip-controls.full-height-buttons .pip-button {
+  height: 100%;
+}
+
+.pip-controls.full-height-buttons:not(.vertical) .pip-label {
+  align-self: end;
+  height: auto;
+}
+
+.pip-controls.full-height-buttons.top:not(.vertical) .pip-label {
+  align-self: start;
+}
+
+.pip-controls.vertical.full-height-buttons {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.pip-controls.vertical.full-height-buttons .pip-label {
+  align-self: end;
+  height: auto;
+}
+
+.pip-controls.vertical.full-height-buttons.top .pip-label {
+  align-self: start;
+}
+
 .pip-controls.background-translucent.top {
   background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.38));
 }
