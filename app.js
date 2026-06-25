@@ -27,7 +27,7 @@ import {
   toggleHidden as toggleHiddenCards,
 } from "./core.js";
 
-const MAX_CARDS = 40;
+const MAX_CARDS = 80;
 const DB_NAME = "pip-kanpe-tool";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
