@@ -1035,7 +1035,7 @@ body.pip-body {
   inset: 0;
   transform: none;
   background: transparent;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .pip-controls.separate.full-height-buttons {
