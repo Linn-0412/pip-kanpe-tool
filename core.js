@@ -1,3 +1,4 @@
+// UIからもテストからも使う純粋関数群。DOMやIndexedDBには触れない。
 export const PIP_CONTROL_SIZE_CLASSES = ["small", "medium", "large"];
 export const PIP_CONTROL_POSITION_CLASSES = ["top", "middle", "bottom"];
 export const PIP_CONTROL_BACKGROUND_CLASSES = ["background-solid", "background-translucent", "background-clear"];
@@ -11,6 +12,7 @@ const fileNameCollator = new Intl.Collator("ja", {
   sensitivity: "base",
 });
 
+// groupIdsは旧データや単一文字列も受けるため、ここで必ず配列へそろえる。
 export function normalizeCardGroupIds(groupIds) {
   if (Array.isArray(groupIds)) {
     return [...new Set(groupIds.filter((groupId) => typeof groupId === "string" && groupId.length > 0))];
@@ -57,6 +59,7 @@ export function getCurrentCard(cards, index, groupId = ALL_GROUP_ID) {
   return card && !card.hidden && isCardInGroup(card, groupId) ? card : null;
 }
 
+// 現在位置が非表示やグループ外になった時、最も自然な表示可能カードへ寄せる。
 export function normalizeIndex(cards, index, groupId = ALL_GROUP_ID) {
   if (cards.length === 0) {
     return 0;
@@ -87,6 +90,7 @@ export function normalizeIndex(cards, index, groupId = ALL_GROUP_ID) {
   return forward ?? visible[visible.length - 1];
 }
 
+// PiP/プレビューの前後移動。表示対象だけを巡回し、端では折り返す。
 export function step(cards, index, direction, groupId = ALL_GROUP_ID) {
   const visible = getVisibleIndices(cards, groupId);
   if (visible.length === 0) {
@@ -104,6 +108,7 @@ export function step(cards, index, direction, groupId = ALL_GROUP_ID) {
   return visible[nextPosition];
 }
 
+// 全体表示での並び替え。currentIndexも同じカードを指し続けるよう補正する。
 export function reorder(cards, index, direction, currentIndex = index) {
   const nextCards = [...cards];
   const targetIndex = index + direction;
@@ -158,6 +163,7 @@ export function removeGroupFromCards(cards, groupId) {
   }));
 }
 
+// PiPのラベル文字列を作る。表示OFF時は空文字を返してUI側の分岐を減らす。
 export function formatPipLabel(cards, index, settings = {}, groupId = ALL_GROUP_ID) {
   if (settings.showPipLabel === false) {
     return "";
@@ -194,6 +200,7 @@ export function formatBytes(bytes) {
   return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
+// ファイル名順の複数登録で、人間の期待に近い 1, 2, 10 の順へ並べる。
 export function compareFilesByName(a, b) {
   const byName = fileNameCollator.compare(a.name, b.name);
   if (byName !== 0) {
@@ -202,6 +209,7 @@ export function compareFilesByName(a, b) {
   return (a.lastModified ?? 0) - (b.lastModified ?? 0);
 }
 
+// 保存済み設定が未知の値でも、CSSクラスとして安全な既定値へ落とす。
 export function resolvePipControlsSize(settings = {}) {
   return PIP_CONTROL_SIZE_CLASSES.includes(settings.pipControlsSize)
     ? settings.pipControlsSize

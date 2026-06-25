@@ -11,6 +11,7 @@ if (!globalThis.__pipKanpeHotkeysInstalled) {
   });
 }
 
+// まず安定したボタンIDを直接クリックし、見つからない場合はwindow messageへフォールバックする。
 function runCommand(command) {
   const buttonIds = {
     previous: ["preview-pip-prev", "prev-main"],
