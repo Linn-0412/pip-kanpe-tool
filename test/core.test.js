@@ -107,6 +107,7 @@ test("formatPipName strips or keeps file extensions from settings", () => {
 test("formatPipLabel uses visible count and current visible position", () => {
   assert.equal(formatPipLabel(cards, 0, { showFileExtension: false }), "1 / 2　P1_1");
   assert.equal(formatPipLabel(cards, 2, { showFileExtension: true }), "2 / 2　P1_10.png");
+  assert.equal(formatPipLabel(cards, 0, { showPipLabel: false }), "");
   assert.equal(formatPipLabel(cards.map((card) => ({ ...card, hidden: true })), 0), "");
   assert.equal(formatPipLabel(cards, 2, { showFileExtension: false }, "beta"), "1 / 1　P1_10");
 });

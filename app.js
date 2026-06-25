@@ -50,6 +50,7 @@ const state = {
     pipControlsBackground: DEFAULT_PIP_CONTROL_BACKGROUND,
     pipControlsSeparateFromImage: true,
     pipControlsAutoHide: true,
+    showPipLabel: true,
     showFileExtension: false,
     optimizeImages: true,
     hideGuideOnLaunch: false,
@@ -117,6 +118,7 @@ function bindElements() {
     "pip-controls-background-clear",
     "pip-controls-separate",
     "pip-controls-auto-hide",
+    "show-pip-label",
     "show-file-extension",
     "status-line",
     "guide-modal",
@@ -258,6 +260,14 @@ function bindEvents() {
 
   els.pipControlsAutoHide.addEventListener("change", () => {
     state.settings.pipControlsAutoHide = els.pipControlsAutoHide.checked;
+    saveSettings();
+    updatePreview();
+    updatePip();
+  });
+
+  els.showPipLabel.addEventListener("change", () => {
+    state.settings.showPipLabel = els.showPipLabel.checked;
+    syncPipLabelOptions();
     saveSettings();
     updatePreview();
     updatePip();
@@ -1232,6 +1242,7 @@ function applyPipControlClasses(controls) {
   );
   controls.classList.add(getPipControlsSize(), getPipControlsPosition(), getPipControlsBackground());
   controls.classList.toggle("separate", state.settings.pipControlsSeparateFromImage);
+  controls.classList.toggle("label-hidden", !shouldShowPipLabel());
 }
 
 function getPipControlsSize() {
@@ -1248,6 +1259,10 @@ function getPipControlsBackground() {
 
 function formatPipLabel(card) {
   return formatCorePipLabel(state.cards, state.currentIndex, state.settings, state.settings.activeGroupId);
+}
+
+function shouldShowPipLabel() {
+  return state.settings.showPipLabel !== false;
 }
 
 function formatPipDocumentTitle(card) {
@@ -1454,7 +1469,9 @@ function applySettingsToControls() {
   els.pipControlsBackgroundClear.checked = pipControlsBackground === "background-clear";
   els.pipControlsSeparate.checked = state.settings.pipControlsSeparateFromImage;
   els.pipControlsAutoHide.checked = state.settings.pipControlsAutoHide;
+  els.showPipLabel.checked = shouldShowPipLabel();
   els.showFileExtension.checked = state.settings.showFileExtension;
+  syncPipLabelOptions();
   els.optimizeImages.checked = state.settings.optimizeImages;
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
 
@@ -1462,6 +1479,10 @@ function applySettingsToControls() {
   if (guideForced || !state.settings.hideGuideOnLaunch) {
     requestAnimationFrame(showGuideModal);
   }
+}
+
+function syncPipLabelOptions() {
+  els.showFileExtension.disabled = !shouldShowPipLabel();
 }
 
 function setStatus(message, isError = false) {

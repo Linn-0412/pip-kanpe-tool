@@ -959,6 +959,15 @@ body.pip-body {
   backdrop-filter: none;
 }
 
+.pip-controls.label-hidden {
+  grid-template-columns: var(--pip-control-button-width) var(--pip-control-button-width);
+  justify-content: space-between;
+}
+
+.pip-controls.label-hidden .pip-label {
+  display: none;
+}
+
 .pip-controls.background-translucent.top {
   background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.38));
 }
