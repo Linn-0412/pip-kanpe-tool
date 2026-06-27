@@ -80,7 +80,7 @@ const EXTENSION_GUIDES = {
     shortcutsInstruction:
       "アドオンマネージャー（about:addons）を開き、歯車メニューの「拡張機能のショートカットを管理」からキー設定を確認します。",
     note:
-      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。Firefoxの一時的なアドオンは再起動後に外れる場合があります。",
+      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。Firefox版はFirefoxがアクティブな時の操作用です。ゲーム中のグローバルショートカットには対応していません。",
   },
 };
 
