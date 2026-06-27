@@ -37,6 +37,23 @@ const PIP_CONTROL_PLACEMENTS = ["horizontal", "vertical-left", "vertical-right"]
 const DEFAULT_PIP_CONTROL_PLACEMENT = "horizontal";
 const PIP_CONTROL_PLACEMENT_CLASSES = ["horizontal", "vertical", "vertical-left", "vertical-right"];
 const PIP_CONTROL_BEHAVIOR_CLASSES = ["full-height-buttons"];
+const EXTENSION_GUIDES = {
+  chrome: {
+    browserName: "Chrome",
+    extensionsUrl: "chrome://extensions/",
+    shortcutsUrl: "chrome://extensions/shortcuts",
+    developerModeLabel: "デベロッパーモード",
+    loadUnpackedInstruction: "「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。",
+  },
+  edge: {
+    browserName: "Edge",
+    extensionsUrl: "edge://extensions/",
+    shortcutsUrl: "edge://extensions/shortcuts",
+    developerModeLabel: "開発者モード",
+    loadUnpackedInstruction:
+      "「展開して読み込み」または「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。",
+  },
+};
 
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
@@ -75,6 +92,7 @@ window.addEventListener("DOMContentLoaded", init);
 async function init() {
   bindElements();
   bindEvents();
+  applyBrowserGuide();
   loadSettings();
   applySettingsToControls();
   updateSupportBadge();
@@ -140,6 +158,13 @@ function bindElements() {
     "close-guide",
     "close-guide-icon",
     "hide-guide-next-time",
+    "guide-browser-name",
+    "guide-extensions-url",
+    "guide-extensions-copy",
+    "guide-developer-mode-label",
+    "guide-load-unpacked-instruction",
+    "guide-shortcuts-url",
+    "guide-shortcuts-copy",
   ];
 
   ids.forEach((id) => {
@@ -407,6 +432,50 @@ async function handlePaste(event) {
   });
 }
 
+function applyBrowserGuide() {
+  const guide = getCurrentBrowserGuide();
+
+  if (els.guideBrowserName) {
+    els.guideBrowserName.textContent = guide.browserName;
+  }
+  if (els.guideExtensionsUrl) {
+    els.guideExtensionsUrl.textContent = guide.extensionsUrl;
+  }
+  if (els.guideExtensionsCopy instanceof HTMLButtonElement) {
+    els.guideExtensionsCopy.dataset.copyUrl = guide.extensionsUrl;
+  }
+  if (els.guideDeveloperModeLabel) {
+    els.guideDeveloperModeLabel.textContent = guide.developerModeLabel;
+  }
+  if (els.guideLoadUnpackedInstruction) {
+    els.guideLoadUnpackedInstruction.textContent = guide.loadUnpackedInstruction;
+  }
+  if (els.guideShortcutsUrl) {
+    els.guideShortcutsUrl.textContent = guide.shortcutsUrl;
+  }
+  if (els.guideShortcutsCopy instanceof HTMLButtonElement) {
+    els.guideShortcutsCopy.dataset.copyUrl = guide.shortcutsUrl;
+  }
+}
+
+function getCurrentBrowserGuide() {
+  return isEdgeBrowser() ? EXTENSION_GUIDES.edge : EXTENSION_GUIDES.chrome;
+}
+
+function isEdgeBrowser() {
+  return /\bEdg\//.test(navigator.userAgent);
+}
+
+function getBrowserNameForUrl(url) {
+  if (url.startsWith("edge://")) {
+    return EXTENSION_GUIDES.edge.browserName;
+  }
+  if (url.startsWith("chrome://")) {
+    return EXTENSION_GUIDES.chrome.browserName;
+  }
+  return "ブラウザ";
+}
+
 function showGuideModal() {
   els.hideGuideNextTime.checked = state.settings.hideGuideOnLaunch;
   els.guideModal.hidden = false;
@@ -429,14 +498,15 @@ async function copyGuideUrl(button) {
   }
 
   const originalText = button.textContent;
+  const browserName = getBrowserNameForUrl(url);
   try {
     await navigator.clipboard.writeText(url);
     button.textContent = "コピー済み";
-    setStatus(`${url} をコピーしました。Chromeのアドレスバーに貼り付けて開いてください。`);
+    setStatus(`${url} をコピーしました。${browserName}のアドレスバーに貼り付けて開いてください。`);
   } catch (error) {
     console.error(error);
     button.textContent = "コピー失敗";
-    setStatus("コピーできませんでした。表示されているURLをChromeのアドレスバーに入力してください。", true);
+    setStatus(`コピーできませんでした。表示されているURLを${browserName}のアドレスバーに入力してください。`, true);
   }
 
   window.setTimeout(() => {
@@ -444,7 +514,7 @@ async function copyGuideUrl(button) {
   }, 1600);
 }
 
-// Chrome拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
+// Chrome/Edge拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
 function handleExtensionMessage(event) {
   if (event.source !== window || event.origin !== window.location.origin) {
     return;

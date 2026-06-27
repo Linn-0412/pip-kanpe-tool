@@ -244,7 +244,7 @@
           </li>
           <li>
             <strong>ゲーム中に切り替える</strong>
-            <span>PiP小窓の ← / →、またはChrome拡張のショートカットで前後のカンペへ切り替えます。FF14の表示モードごとのPiP表示可否は次の通りです。</span>
+            <span>PiP小窓の ← / →、またはChrome/Edge拡張のショートカットで前後のカンペへ切り替えます。FF14の表示モードごとのPiP表示可否は次の通りです。</span>
             <dl class="guide-mode-list">
               <div>
                 <dt>フルスクリーン</dt>
@@ -265,13 +265,13 @@
             <ol class="guide-substeps">
               <li><a class="guide-link" href="https://github.com/Linn-0412/pip-kanpe-tool/releases/latest/download/pip-kanpe-tool-hotkeys-extension.zip" target="_blank" rel="noopener">こちらから拡張機能ZIPをダウンロード</a>して解凍します。</li>
               <li>
-                <span>Chromeの拡張機能画面（<span class="guide-url">chrome://extensions/</span>）を開き、デベロッパーモードをオンにします。</span>
-                <button class="copy-url-button" type="button" data-copy-url="chrome://extensions/">URLをコピー</button>
+                <span><span id="guide-browser-name">Chrome</span>の拡張機能画面（<span id="guide-extensions-url" class="guide-url">chrome://extensions/</span>）を開き、<span id="guide-developer-mode-label">デベロッパーモード</span>をオンにします。</span>
+                <button id="guide-extensions-copy" class="copy-url-button" type="button" data-copy-url="chrome://extensions/">URLをコピー</button>
               </li>
-              <li>「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。</li>
+              <li id="guide-load-unpacked-instruction">「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。</li>
               <li>
-                <span>ショートカット設定画面（<span class="guide-url">chrome://extensions/shortcuts</span>）でキー設定を確認します。</span>
-                <button class="copy-url-button" type="button" data-copy-url="chrome://extensions/shortcuts">URLをコピー</button>
+                <span>ショートカット設定画面（<span id="guide-shortcuts-url" class="guide-url">chrome://extensions/shortcuts</span>）でキー設定を確認します。</span>
+                <button id="guide-shortcuts-copy" class="copy-url-button" type="button" data-copy-url="chrome://extensions/shortcuts">URLをコピー</button>
               </li>
             </ol>
             <small class="guide-note">※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。FF14のキーバインドと衝突する場合はショートカット設定画面で別のキーに変更してください。</small>
