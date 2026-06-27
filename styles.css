@@ -584,6 +584,14 @@ input[type="text"] {
   border-color: rgba(0, 209, 189, 0.55);
 }
 
+.support-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .danger-button {
   color: var(--danger);
   border-color: rgba(255, 90, 112, 0.3);
