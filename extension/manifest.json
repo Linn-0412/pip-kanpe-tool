@@ -7,13 +7,21 @@
     "default_title": "PiP カンペツール Hotkeys"
   },
   "permissions": ["scripting", "tabs"],
-  "host_permissions": ["https://linn-0412.github.io/pip-kanpe-tool/*"],
+  "host_permissions": [
+    "https://linn-0412.github.io/pip-kanpe-tool/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
   "background": {
     "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://linn-0412.github.io/pip-kanpe-tool/*"],
+      "matches": [
+        "https://linn-0412.github.io/pip-kanpe-tool/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
       "js": ["content-script.js"],
       "run_at": "document_idle"
     }

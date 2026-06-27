@@ -1,4 +1,8 @@
-const TOOL_URL_PATTERN = "https://linn-0412.github.io/pip-kanpe-tool/*";
+const TOOL_URL_PATTERNS = [
+  "https://linn-0412.github.io/pip-kanpe-tool/*",
+  "http://localhost/*",
+  "http://127.0.0.1/*",
+];
 
 // FirefoxはChrome拡張のservice worker前提とは違うため、background.scriptsで常駐側の橋渡しだけ行う。
 const COMMAND_TO_ACTION = {
@@ -21,12 +25,25 @@ browser.commands.onCommand.addListener(async (command) => {
 });
 
 async function findToolTab() {
-  const tabs = await browser.tabs.query({ url: TOOL_URL_PATTERN });
+  const tabsByPattern = await Promise.all(TOOL_URL_PATTERNS.map((url) => browser.tabs.query({ url })));
+  const tabs = uniqueTabs(tabsByPattern.flat());
   if (tabs.length === 0) {
     return null;
   }
 
   return tabs.find((tab) => tab.active) ?? tabs[0];
+}
+
+function uniqueTabs(tabs) {
+  const seen = new Set();
+  return tabs.filter((tab) => {
+    if (!tab.id || seen.has(tab.id)) {
+      return false;
+    }
+
+    seen.add(tab.id);
+    return true;
+  });
 }
 
 async function sendActionToTab(tabId, action) {
