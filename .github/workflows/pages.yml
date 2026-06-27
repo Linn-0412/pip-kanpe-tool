@@ -39,6 +39,8 @@ jobs:
           node --check core.js
           node --check extension/content-script.js
           node --check extension/service-worker.js
+          node --check extension-firefox/content-script.js
+          node --check extension-firefox/background.js
 
       - name: Run unit tests
         run: npm test
