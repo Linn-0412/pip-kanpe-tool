@@ -40,18 +40,47 @@ const PIP_CONTROL_BEHAVIOR_CLASSES = ["full-height-buttons"];
 const EXTENSION_GUIDES = {
   chrome: {
     browserName: "Chrome",
+    downloadUrl:
+      "https://github.com/Linn-0412/pip-kanpe-tool/releases/latest/download/pip-kanpe-tool-hotkeys-extension.zip",
+    downloadText: "こちらからChrome / Edge用拡張機能ZIPをダウンロード",
     extensionsUrl: "chrome://extensions/",
     shortcutsUrl: "chrome://extensions/shortcuts",
-    developerModeLabel: "デベロッパーモード",
+    extensionsInstruction:
+      "Chromeの拡張機能画面（chrome://extensions/）を開き、デベロッパーモードをオンにします。",
     loadUnpackedInstruction: "「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。",
+    shortcutsInstruction: "ショートカット設定画面（chrome://extensions/shortcuts）でキー設定を確認します。",
+    note:
+      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。FF14のキーバインドと衝突する場合はショートカット設定画面で別のキーに変更してください。",
   },
   edge: {
     browserName: "Edge",
+    downloadUrl:
+      "https://github.com/Linn-0412/pip-kanpe-tool/releases/latest/download/pip-kanpe-tool-hotkeys-extension.zip",
+    downloadText: "こちらからChrome / Edge用拡張機能ZIPをダウンロード",
     extensionsUrl: "edge://extensions/",
     shortcutsUrl: "edge://extensions/shortcuts",
-    developerModeLabel: "開発者モード",
+    extensionsInstruction:
+      "Edgeの拡張機能画面（edge://extensions/）を開き、左下の開発者モードをオンにします。",
+    loadUnpackedInstruction: "「展開して読み込む」から、解凍したフォルダを選びます。",
+    shortcutsInstruction: "ショートカット設定画面（edge://extensions/shortcuts）でキー設定を確認します。",
+    note:
+      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。FF14のキーバインドと衝突する場合はショートカット設定画面で別のキーに変更してください。",
+  },
+  firefox: {
+    browserName: "Firefox",
+    downloadUrl:
+      "https://github.com/Linn-0412/pip-kanpe-tool/releases/latest/download/pip-kanpe-tool-hotkeys-extension-firefox.zip",
+    downloadText: "こちらからFirefox用拡張機能ZIPをダウンロード",
+    extensionsUrl: "about:debugging#/runtime/this-firefox",
+    shortcutsUrl: "about:addons",
+    extensionsInstruction:
+      "Firefoxの一時的なアドオン画面（about:debugging#/runtime/this-firefox）を開きます。",
     loadUnpackedInstruction:
-      "「展開して読み込み」または「パッケージ化されていない拡張機能を読み込む」から、解凍したフォルダを選びます。",
+      "「一時的なアドオンを読み込む」から、解凍したフォルダ内のmanifest.jsonを選びます。",
+    shortcutsInstruction:
+      "アドオンマネージャー（about:addons）を開き、歯車メニューの「拡張機能のショートカットを管理」からキー設定を確認します。",
+    note:
+      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。Firefoxの一時的なアドオンは再起動後に外れる場合があります。",
   },
 };
 
@@ -158,13 +187,13 @@ function bindElements() {
     "close-guide",
     "close-guide-icon",
     "hide-guide-next-time",
-    "guide-browser-name",
-    "guide-extensions-url",
+    "guide-extension-download-link",
+    "guide-extensions-instruction",
     "guide-extensions-copy",
-    "guide-developer-mode-label",
     "guide-load-unpacked-instruction",
-    "guide-shortcuts-url",
+    "guide-shortcuts-instruction",
     "guide-shortcuts-copy",
+    "guide-extension-note",
   ];
 
   ids.forEach((id) => {
@@ -435,38 +464,52 @@ async function handlePaste(event) {
 function applyBrowserGuide() {
   const guide = getCurrentBrowserGuide();
 
-  if (els.guideBrowserName) {
-    els.guideBrowserName.textContent = guide.browserName;
+  if (els.guideExtensionDownloadLink instanceof HTMLAnchorElement) {
+    els.guideExtensionDownloadLink.href = guide.downloadUrl;
+    els.guideExtensionDownloadLink.textContent = guide.downloadText;
   }
-  if (els.guideExtensionsUrl) {
-    els.guideExtensionsUrl.textContent = guide.extensionsUrl;
+  if (els.guideExtensionsInstruction) {
+    els.guideExtensionsInstruction.textContent = guide.extensionsInstruction;
   }
   if (els.guideExtensionsCopy instanceof HTMLButtonElement) {
     els.guideExtensionsCopy.dataset.copyUrl = guide.extensionsUrl;
   }
-  if (els.guideDeveloperModeLabel) {
-    els.guideDeveloperModeLabel.textContent = guide.developerModeLabel;
-  }
   if (els.guideLoadUnpackedInstruction) {
     els.guideLoadUnpackedInstruction.textContent = guide.loadUnpackedInstruction;
   }
-  if (els.guideShortcutsUrl) {
-    els.guideShortcutsUrl.textContent = guide.shortcutsUrl;
+  if (els.guideShortcutsInstruction) {
+    els.guideShortcutsInstruction.textContent = guide.shortcutsInstruction;
   }
   if (els.guideShortcutsCopy instanceof HTMLButtonElement) {
     els.guideShortcutsCopy.dataset.copyUrl = guide.shortcutsUrl;
   }
+  if (els.guideExtensionNote) {
+    els.guideExtensionNote.textContent = guide.note;
+  }
 }
 
 function getCurrentBrowserGuide() {
-  return isEdgeBrowser() ? EXTENSION_GUIDES.edge : EXTENSION_GUIDES.chrome;
+  if (isFirefoxBrowser()) {
+    return EXTENSION_GUIDES.firefox;
+  }
+  if (isEdgeBrowser()) {
+    return EXTENSION_GUIDES.edge;
+  }
+  return EXTENSION_GUIDES.chrome;
 }
 
 function isEdgeBrowser() {
   return /\bEdg\//.test(navigator.userAgent);
 }
 
+function isFirefoxBrowser() {
+  return /\bFirefox\//.test(navigator.userAgent);
+}
+
 function getBrowserNameForUrl(url) {
+  if (url.startsWith("about:")) {
+    return EXTENSION_GUIDES.firefox.browserName;
+  }
   if (url.startsWith("edge://")) {
     return EXTENSION_GUIDES.edge.browserName;
   }
@@ -514,7 +557,7 @@ async function copyGuideUrl(button) {
   }, 1600);
 }
 
-// Chrome / Edge拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
+// ブラウザ拡張機能のショートカットから届くコマンドをアプリ操作へ変換する。
 function handleExtensionMessage(event) {
   if (event.source !== window || event.origin !== window.location.origin) {
     return;
