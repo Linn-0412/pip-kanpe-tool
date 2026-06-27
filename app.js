@@ -66,22 +66,6 @@ const EXTENSION_GUIDES = {
     note:
       "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。FF14のキーバインドと衝突する場合はショートカット設定画面で別のキーに変更してください。",
   },
-  firefox: {
-    browserName: "Firefox",
-    downloadUrl:
-      "https://github.com/Linn-0412/pip-kanpe-tool/releases/latest/download/pip-kanpe-tool-hotkeys-extension-firefox.zip",
-    downloadText: "こちらからFirefox用拡張機能ZIPをダウンロード",
-    extensionsUrl: "about:debugging#/runtime/this-firefox",
-    shortcutsUrl: "about:addons",
-    extensionsInstruction:
-      "Firefoxの一時的なアドオン画面（about:debugging#/runtime/this-firefox）を開きます。",
-    loadUnpackedInstruction:
-      "「一時的なアドオンを読み込む」から、解凍したフォルダ内のmanifest.jsonを選びます。",
-    shortcutsInstruction:
-      "アドオンマネージャー（about:addons）を開き、歯車メニューの「拡張機能のショートカットを管理」からキー設定を確認します。",
-    note:
-      "※ 初期設定は「Ctrl+Shift+8」が前、「Ctrl+Shift+9」が次です。Firefox版はFirefoxがアクティブな時の操作用です。ゲーム中のグローバルショートカットには対応していません。",
-  },
 };
 
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
@@ -489,9 +473,6 @@ function applyBrowserGuide() {
 }
 
 function getCurrentBrowserGuide() {
-  if (isFirefoxBrowser()) {
-    return EXTENSION_GUIDES.firefox;
-  }
   if (isEdgeBrowser()) {
     return EXTENSION_GUIDES.edge;
   }
@@ -502,14 +483,7 @@ function isEdgeBrowser() {
   return /\bEdg\//.test(navigator.userAgent);
 }
 
-function isFirefoxBrowser() {
-  return /\bFirefox\//.test(navigator.userAgent);
-}
-
 function getBrowserNameForUrl(url) {
-  if (url.startsWith("about:")) {
-    return EXTENSION_GUIDES.firefox.browserName;
-  }
   if (url.startsWith("edge://")) {
     return EXTENSION_GUIDES.edge.browserName;
   }
@@ -557,7 +531,7 @@ async function copyGuideUrl(button) {
   }, 1600);
 }
 
-// ブラウザ拡張機能のショートカットから届くコマンドをアプリ操作へ変換する。
+// Chrome / Edge拡張機能のショートカットから届くコマンドをアプリ操作へ変換する。
 function handleExtensionMessage(event) {
   if (event.source !== window || event.origin !== window.location.origin) {
     return;

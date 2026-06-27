@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check core.js && node --check extension/content-script.js && node --check extension/service-worker.js && node --check extension-firefox/content-script.js && node --check extension-firefox/background.js",
+    "check": "node --check app.js && node --check core.js && node --check extension/content-script.js && node --check extension/service-worker.js",
     "test": "node --test"
   }
 }

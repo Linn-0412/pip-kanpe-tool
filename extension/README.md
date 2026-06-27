@@ -1,7 +1,6 @@
 # PiP カンペツール Hotkeys
 
 PiPカンペツールをChrome / Edgeのグローバルショートカットで操作する補助拡張です。
-Firefox向け拡張機能は `../extension-firefox/` を使います。
 
 ## インストール
 
