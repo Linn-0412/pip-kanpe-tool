@@ -514,7 +514,7 @@ async function copyGuideUrl(button) {
   }, 1600);
 }
 
-// Chrome/Edge拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
+// Chrome / Edge拡張機能のグローバルショートカットから届くコマンドをアプリ操作へ変換する。
 function handleExtensionMessage(event) {
   if (event.source !== window || event.origin !== window.location.origin) {
     return;
