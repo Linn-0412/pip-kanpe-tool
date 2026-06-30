@@ -44,7 +44,7 @@ jobs:
         run: npm test
 
   deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -55,16 +55,30 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
+      - name: Checkout stable source
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: stable-source
+
+      - name: Checkout beta source
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: beta-source
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Prepare static site
         run: |
-          mkdir site
-          cp index.html styles.css app.js core.js favicon.jpg LICENSE README.md .nojekyll site/
+          mkdir -p site site/beta
+          for file in index.html styles.css app.js core.js favicon.jpg LICENSE README.md; do
+            cp "stable-source/$file" "site/$file"
+            cp "beta-source/$file" "site/beta/$file"
+          done
+          cp stable-source/.nojekyll site/
+          cp beta-source/.nojekyll site/beta/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
