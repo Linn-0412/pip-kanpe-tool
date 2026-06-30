@@ -35,10 +35,12 @@ import {
 
 // 主要な制限値と保存先。枚数上限やDB名を変えるforkはまずここを見る。
 const MAX_CARDS = 80;
-const DB_NAME = "pip-kanpe-tool";
+const APP_VARIANT = getAppVariant();
+const IS_BETA = APP_VARIANT === "beta";
+const DB_NAME = IS_BETA ? "pip-kanpe-tool-beta" : "pip-kanpe-tool";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
-const SETTINGS_KEY = "pip-kanpe-settings";
+const SETTINGS_KEY = IS_BETA ? "pip-kanpe-settings-beta" : "pip-kanpe-settings";
 const DECK_EXPORT_SETTING_KEYS = [
   "fitMode",
   "pipSize",
@@ -125,6 +127,7 @@ async function init() {
   bindElements();
   bindEvents();
   applyBrowserGuide();
+  updateVariantBadge();
   loadSettings();
   applySettingsToControls();
   updateSupportBadge();
@@ -144,6 +147,7 @@ async function init() {
 // HTMLのidをcamelCase化してelsへ集約する。イベント側でquerySelectorを散らさないための入口。
 function bindElements() {
   const ids = [
+    "variant-badge",
     "support-badge",
     "open-guide",
     "open-pip",
@@ -513,6 +517,16 @@ function isEdgeBrowser() {
   return /\bEdg\//.test(navigator.userAgent);
 }
 
+function getAppVariant() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("variant") === "beta" || params.has("beta")) {
+    return "beta";
+  }
+
+  const pathParts = window.location.pathname.split("/").filter(Boolean);
+  return pathParts.includes("beta") ? "beta" : "stable";
+}
+
 function getBrowserNameForUrl(url) {
   if (url.startsWith("edge://")) {
     return EXTENSION_GUIDES.edge.browserName;
@@ -589,6 +603,23 @@ function updateSupportBadge() {
   els.supportBadge.classList.toggle("ok", supported);
   els.supportBadge.classList.toggle("warn", !supported);
   els.openPip.disabled = !supported;
+}
+
+// β版URLでは正式版と別の保存領域を使うことを画面上でも明示する。
+function updateVariantBadge() {
+  if (!els.variantBadge) {
+    return;
+  }
+
+  els.variantBadge.hidden = !IS_BETA;
+  if (!IS_BETA) {
+    return;
+  }
+
+  els.variantBadge.textContent = "β版";
+  if (!document.title.startsWith("β版 ")) {
+    document.title = `β版 ${document.title}`;
+  }
 }
 
 // 画像本体はIndexedDBに保存する。サーバーへアップロードしないための中核。
