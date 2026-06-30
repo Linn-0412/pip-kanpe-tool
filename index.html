@@ -41,6 +41,18 @@
           </label>
         </div>
 
+        <div class="deck-tools" aria-label="カンペセット操作">
+          <div>
+            <strong>カンペセット</strong>
+            <span>登録画像、並び順、グループ、PiP表示設定をまとめて保存・読み込みできます。</span>
+          </div>
+          <div class="deck-tool-actions">
+            <button id="export-deck" class="secondary-button" type="button">エクスポート</button>
+            <button id="import-deck" class="secondary-button" type="button">インポート</button>
+            <input id="deck-import-input" type="file" accept=".pipkanpe,application/json" hidden>
+          </div>
+        </div>
+
         <div class="group-panel" aria-label="グループ管理">
           <label class="group-field">
             <span>表示グループ</span>
@@ -61,6 +73,17 @@
               <small>選択中のグループで画像を追加すると、そのグループに自動で入ります。</small>
             </div>
           </details>
+        </div>
+
+        <div class="beta-feedback" aria-label="β版フィードバック">
+          <div>
+            <strong>β版フィードバック</strong>
+            <span>気づいたことや不具合は、GitHub IssueまたはOFUSEコメントへお願いします。</span>
+          </div>
+          <div class="feedback-links">
+            <a href="https://github.com/Linn-0412/pip-kanpe-tool/issues/new?template=beta-test-checklist.md" target="_blank" rel="noopener">GitHub Issue</a>
+            <a href="https://ofuse.me/linn0412" target="_blank" rel="noopener">OFUSE</a>
+          </div>
         </div>
 
         <div class="list-header">

@@ -1,5 +1,8 @@
 import {
   ALL_GROUP_ID,
+  DECK_FILE_EXTENSION,
+  DECK_FILE_FORMAT,
+  DECK_SCHEMA_VERSION,
   DEFAULT_PIP_CONTROL_BACKGROUND,
   DEFAULT_PIP_CONTROL_POSITION,
   DEFAULT_PIP_CONTROL_SIZE,
@@ -16,12 +19,15 @@ import {
   isAllGroup,
   isCardInGroup,
   normalizeCardGroupIds,
+  normalizeDeckCards,
+  normalizeDeckGroups,
   normalizeIndex,
   removeGroupFromCards,
   reorder as reorderCards,
   resolvePipControlsBackground,
   resolvePipControlsPosition,
   resolvePipControlsSize,
+  sanitizeDeckFileName,
   step as stepVisibleCard,
   toggleCardGroup,
   toggleHidden as toggleHiddenCards,
@@ -33,6 +39,19 @@ const DB_NAME = "pip-kanpe-tool";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
 const SETTINGS_KEY = "pip-kanpe-settings";
+const DECK_EXPORT_SETTING_KEYS = [
+  "fitMode",
+  "pipSize",
+  "pipControlsSize",
+  "pipControlsPlacement",
+  "pipControlsFullHeightButtons",
+  "pipControlsPosition",
+  "pipControlsBackground",
+  "pipControlsSeparateFromImage",
+  "pipControlsAutoHide",
+  "showPipLabel",
+  "showFileExtension",
+];
 const PIP_CONTROL_PLACEMENTS = ["horizontal", "vertical-left", "vertical-right"];
 const DEFAULT_PIP_CONTROL_PLACEMENT = "horizontal";
 const PIP_CONTROL_PLACEMENT_CLASSES = ["horizontal", "vertical", "vertical-left", "vertical-right"];
@@ -131,6 +150,9 @@ function bindElements() {
     "drop-zone",
     "file-input",
     "pick-files",
+    "export-deck",
+    "import-deck",
+    "deck-import-input",
     "optimize-images",
     "group-filter",
     "group-name",
@@ -210,6 +232,14 @@ function bindEvents() {
   els.fileInput.addEventListener("change", async () => {
     await addFiles(els.fileInput.files);
     els.fileInput.value = "";
+  });
+  els.exportDeck.addEventListener("click", exportDeck);
+  els.importDeck.addEventListener("click", () => {
+    els.deckImportInput.click();
+  });
+  els.deckImportInput.addEventListener("change", async () => {
+    await importDeckFile(els.deckImportInput.files?.[0] ?? null);
+    els.deckImportInput.value = "";
   });
 
   document.addEventListener("paste", handlePaste);
@@ -768,6 +798,258 @@ async function addFiles(fileList, options = {}) {
   }
 }
 
+// 登録画像とグループ、PiP表示設定を1つの共有・バックアップ用ファイルへまとめる。
+async function exportDeck() {
+  if (state.cards.length === 0) {
+    setStatus("エクスポートできる画像がありません。", true);
+    return;
+  }
+
+  try {
+    setStatus("カンペセットを作成しています...");
+    const payload = await createDeckPayload();
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    downloadBlob(blob, createDeckExportFileName());
+    setStatus(`${state.cards.length}枚のカンペセットを書き出しました。`);
+  } catch (error) {
+    console.error(error);
+    setStatus("カンペセットを書き出せませんでした。", true);
+  }
+}
+
+async function createDeckPayload() {
+  const orderedCards = [...state.cards].sort((a, b) => a.order - b.order);
+  const cards = [];
+
+  for (const [index, card] of orderedCards.entries()) {
+    cards.push({
+      name: card.name,
+      type: card.type || card.blob?.type || "image/png",
+      size: card.size || card.blob?.size || 0,
+      originalSize: card.originalSize || card.size || card.blob?.size || 0,
+      order: index,
+      hidden: Boolean(card.hidden),
+      groupIds: normalizeCardGroupIds(card.groupIds),
+      createdAt: card.createdAt || Date.now(),
+      dataUrl: await blobToDataUrl(card.blob),
+    });
+  }
+
+  return {
+    format: DECK_FILE_FORMAT,
+    version: DECK_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    settings: pickDeckSettings(),
+    groups: state.settings.groups.map((group) => ({ id: group.id, name: group.name })),
+    cards,
+  };
+}
+
+function pickDeckSettings() {
+  return DECK_EXPORT_SETTING_KEYS.reduce((settings, key) => {
+    settings[key] = state.settings[key];
+    return settings;
+  }, {});
+}
+
+function createDeckExportFileName() {
+  const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  return `${sanitizeDeckFileName("pip-kanpe-set")}-${timestamp}${DECK_FILE_EXTENSION}`;
+}
+
+async function importDeckFile(file) {
+  if (!file) {
+    return;
+  }
+
+  if (!state.db) {
+    setStatus("保存領域の準備がまだ終わっていません。", true);
+    return;
+  }
+
+  try {
+    const payload = parseDeckPayload(await file.text());
+    const remaining = MAX_CARDS - state.cards.length;
+    if (payload.cards.length > remaining) {
+      setStatus(
+        `このカンペセットは${payload.cards.length}枚です。残り登録可能枚数は${remaining}枚なので読み込めません。`,
+        true,
+      );
+      return;
+    }
+
+    const ok = window.confirm(
+      `「${file.name}」から${payload.cards.length}枚を追加します。グループとPiP表示設定も読み込みます。よろしいですか？`,
+    );
+    if (!ok) {
+      setStatus("カンペセットの読み込みをキャンセルしました。");
+      return;
+    }
+
+    setStatus("カンペセットを読み込んでいます...");
+    const preparedCards = await Promise.all(payload.cards.map((card) => prepareImportedCard(card)));
+    const groupMap = mergeImportedGroups(payload.groups);
+    const baseOrder = state.cards.length > 0 ? Math.max(...state.cards.map((card) => card.order)) + 1 : 0;
+    const importedCards = preparedCards.map((card, index) => ({
+      ...card,
+      id: crypto.randomUUID(),
+      order: baseOrder + index,
+      groupIds: card.groupIds.map((groupId) => groupMap.get(groupId)).filter(Boolean),
+      createdAt: Date.now(),
+    }));
+
+    for (const card of importedCards) {
+      await putCard(card);
+    }
+
+    applyImportedSettings(payload.settings);
+    state.cards.push(...importedCards);
+    if (importedCards.length > 0) {
+      state.currentIndex = state.cards.length - importedCards.length;
+    }
+    saveSettings();
+    applySettingsToControls();
+    normalizeCurrentIndex();
+    render();
+    setStatus(`${importedCards.length}枚のカンペセットを読み込みました。`);
+  } catch (error) {
+    console.error(error);
+    setStatus("カンペセットを読み込めませんでした。ファイル形式を確認してください。", true);
+  }
+}
+
+function parseDeckPayload(text) {
+  const payload = JSON.parse(text);
+  if (!payload || payload.format !== DECK_FILE_FORMAT) {
+    throw new Error("Unsupported deck format");
+  }
+
+  const version = Number(payload.version ?? 1);
+  if (!Number.isFinite(version) || version > DECK_SCHEMA_VERSION) {
+    throw new Error("Unsupported deck version");
+  }
+
+  const groups = normalizeDeckGroups(payload.groups);
+  const cards = normalizeDeckCards(payload.cards);
+  if (!Array.isArray(payload.cards) || cards.length === 0 || cards.length !== payload.cards.length) {
+    throw new Error("Deck cards are invalid");
+  }
+
+  const settings = payload.settings && typeof payload.settings === "object" ? payload.settings : {};
+  return { groups, cards, settings };
+}
+
+async function prepareImportedCard(card) {
+  const blob = dataUrlToBlob(card.dataUrl, card.type);
+  if (!blob.type.startsWith("image/")) {
+    throw new Error("Imported card is not an image");
+  }
+
+  return {
+    name: card.name,
+    type: blob.type,
+    size: blob.size,
+    originalSize: card.originalSize || card.size || blob.size,
+    hidden: card.hidden,
+    groupIds: card.groupIds,
+    blob,
+  };
+}
+
+function mergeImportedGroups(groups) {
+  const groupMap = new Map();
+  const nextGroups = [...state.settings.groups];
+
+  groups.forEach((group) => {
+    const existingGroup = nextGroups.find((currentGroup) => currentGroup.name === group.name);
+    if (existingGroup) {
+      groupMap.set(group.id, existingGroup.id);
+      return;
+    }
+
+    const nextGroup = { id: createGroupId(), name: group.name };
+    nextGroups.push(nextGroup);
+    groupMap.set(group.id, nextGroup.id);
+  });
+
+  state.settings.groups = nextGroups;
+  return groupMap;
+}
+
+function applyImportedSettings(settings) {
+  DECK_EXPORT_SETTING_KEYS.forEach((key) => {
+    const value = settings[key];
+    if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+      return;
+    }
+
+    if (isValidDeckSetting(key, value)) {
+      state.settings[key] = value;
+    }
+  });
+}
+
+function isValidDeckSetting(key, value) {
+  if (key === "fitMode") {
+    return value === "contain" || value === "cover";
+  }
+  if (key === "pipSize") {
+    return ["480x270", "640x360", "800x450", "960x540"].includes(value);
+  }
+  if (key === "pipControlsSize") {
+    return ["small", "medium", "large"].includes(value);
+  }
+  if (key === "pipControlsPlacement") {
+    return PIP_CONTROL_PLACEMENTS.includes(value);
+  }
+  if (key === "pipControlsPosition") {
+    return ["top", "middle", "bottom"].includes(value);
+  }
+  if (key === "pipControlsBackground") {
+    return ["solid", "translucent", "clear"].includes(value);
+  }
+
+  return typeof value === "boolean";
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function dataUrlToBlob(dataUrl, fallbackType = "image/png") {
+  const match = dataUrl.match(/^data:([^;,]+)?(;base64)?,(.*)$/);
+  if (!match) {
+    throw new Error("Invalid data URL");
+  }
+
+  const type = match[1] || fallbackType || "image/png";
+  const encodedData = match[3] || "";
+  const binary = match[2] ? atob(encodedData) : decodeURIComponent(encodedData);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type });
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 // 大量登録時の保存容量とサムネイル負荷を抑える。元より重くなる場合は元ファイルを残す。
 function optimizeImage(file) {
   return new Promise((resolve) => {
@@ -1213,6 +1495,7 @@ function updateControls() {
 
   els.openPip.disabled = !hasVisibleCards || !("documentPictureInPicture" in window);
   els.clearAll.disabled = !hasCards;
+  els.exportDeck.disabled = !hasCards;
 }
 
 // Document Picture-in-Pictureを開く。失敗時はユーザー操作から再試行してもらう。

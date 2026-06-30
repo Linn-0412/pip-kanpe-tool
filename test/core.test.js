@@ -3,6 +3,9 @@ import test from "node:test";
 
 import {
   ALL_GROUP_ID,
+  DECK_FILE_EXTENSION,
+  DECK_FILE_FORMAT,
+  DECK_SCHEMA_VERSION,
   compareFilesByName,
   formatBytes,
   formatPipLabel,
@@ -11,12 +14,15 @@ import {
   getGroupIndices,
   getVisibleIndices,
   isCardInGroup,
+  normalizeDeckCards,
+  normalizeDeckGroups,
   normalizeIndex,
   removeGroupFromCards,
   reorder,
   resolvePipControlsBackground,
   resolvePipControlsPosition,
   resolvePipControlsSize,
+  sanitizeDeckFileName,
   step,
   stripFileExtension,
   toggleCardGroup,
@@ -39,6 +45,37 @@ test("group helpers filter cards without treating all as a real tag", () => {
   assert.equal(isCardInGroup(cards[0], "alpha"), true);
   assert.equal(isCardInGroup(cards[0], "beta"), false);
   assert.deepEqual(getVisibleIndices(cards, ALL_GROUP_ID), [0, 2]);
+});
+
+test("deck payload helpers normalize export metadata", () => {
+  assert.equal(DECK_FILE_FORMAT, "pip-kanpe-tool.deck");
+  assert.equal(DECK_SCHEMA_VERSION, 1);
+  assert.equal(DECK_FILE_EXTENSION, ".pipkanpe");
+  assert.equal(sanitizeDeckFileName(' 絶ケフカ:野良? '), "絶ケフカ_野良_");
+  assert.equal(sanitizeDeckFileName(""), "pip-kanpe-set");
+});
+
+test("normalizeDeckGroups keeps usable unique groups", () => {
+  assert.deepEqual(normalizeDeckGroups([{ id: "alpha", name: " P1 " }, { id: "alpha", name: "重複" }, { id: "all", name: "全体" }, {}]), [
+    { id: "alpha", name: "P1" },
+    { id: "group-4", name: "グループ4" },
+  ]);
+});
+
+test("normalizeDeckCards keeps image data and sorts by order", () => {
+  const normalized = normalizeDeckCards([
+    { name: "second.png", type: "image/png", size: 10, order: 2, dataUrl: "data:image/png;base64,BBBB", groupIds: "alpha" },
+    { name: "", type: "image/webp", size: 20, originalSize: 40, order: 1, hidden: true, dataUrl: "data:image/webp;base64,AAAA" },
+    { name: "bad.txt", dataUrl: "data:text/plain;base64,AAAA" },
+  ]);
+
+  assert.deepEqual(
+    normalized.map((card) => card.name),
+    ["image-2.png", "second.png"],
+  );
+  assert.equal(normalized[0].hidden, true);
+  assert.equal(normalized[0].originalSize, 40);
+  assert.deepEqual(normalized[1].groupIds, ["alpha"]);
 });
 
 test("normalizeIndex clamps and skips hidden cards", () => {

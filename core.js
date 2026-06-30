@@ -6,6 +6,9 @@ export const DEFAULT_PIP_CONTROL_SIZE = "medium";
 export const DEFAULT_PIP_CONTROL_POSITION = "bottom";
 export const DEFAULT_PIP_CONTROL_BACKGROUND = "solid";
 export const ALL_GROUP_ID = "all";
+export const DECK_FILE_FORMAT = "pip-kanpe-tool.deck";
+export const DECK_SCHEMA_VERSION = 1;
+export const DECK_FILE_EXTENSION = ".pipkanpe";
 
 const fileNameCollator = new Intl.Collator("ja", {
   numeric: true,
@@ -23,6 +26,65 @@ export function normalizeCardGroupIds(groupIds) {
   }
 
   return [];
+}
+
+export function normalizeDeckGroups(groups) {
+  if (!Array.isArray(groups)) {
+    return [];
+  }
+
+  const seen = new Set();
+  return groups
+    .map((group, index) => {
+      const id = typeof group?.id === "string" && group.id.trim() ? group.id.trim() : `group-${index + 1}`;
+      const name = typeof group?.name === "string" && group.name.trim() ? group.name.trim() : `グループ${index + 1}`;
+      return { id, name };
+    })
+    .filter((group) => {
+      if (isAllGroup(group.id) || seen.has(group.id)) {
+        return false;
+      }
+
+      seen.add(group.id);
+      return true;
+    });
+}
+
+export function normalizeDeckCards(cards) {
+  if (!Array.isArray(cards)) {
+    return [];
+  }
+
+  return cards
+    .map((card, index) => {
+      if (!card || typeof card.dataUrl !== "string" || !card.dataUrl.startsWith("data:image/")) {
+        return null;
+      }
+
+      const name = typeof card.name === "string" && card.name.trim() ? card.name.trim() : `image-${index + 1}.png`;
+      return {
+        name,
+        type: typeof card.type === "string" ? card.type : "",
+        size: Number.isFinite(card.size) ? card.size : 0,
+        originalSize: Number.isFinite(card.originalSize) ? card.originalSize : Number.isFinite(card.size) ? card.size : 0,
+        order: Number.isFinite(card.order) ? card.order : index,
+        hidden: Boolean(card.hidden),
+        groupIds: normalizeCardGroupIds(card.groupIds),
+        createdAt: Number.isFinite(card.createdAt) ? card.createdAt : 0,
+        dataUrl: card.dataUrl,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order);
+}
+
+export function sanitizeDeckFileName(name, fallback = "pip-kanpe-set") {
+  const base = `${name ?? ""}`
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .replace(/\s+/g, "-")
+    .replace(/^\.+$/, "");
+  return base || fallback;
 }
 
 export function isAllGroup(groupId) {

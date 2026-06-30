@@ -181,6 +181,70 @@ h2 {
   padding: 0.9rem 0;
 }
 
+.deck-tools,
+.beta-feedback {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.deck-tools {
+  margin-bottom: 0.85rem;
+}
+
+.beta-feedback {
+  margin: 0.85rem 0;
+}
+
+.deck-tools strong,
+.deck-tools span,
+.beta-feedback strong,
+.beta-feedback span {
+  display: block;
+}
+
+.deck-tools span,
+.beta-feedback span {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.deck-tool-actions,
+.feedback-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.deck-tool-actions button {
+  flex: 1 1 8rem;
+}
+
+.feedback-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(0, 209, 189, 0.35);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: rgba(0, 209, 189, 0.07);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.feedback-links a:hover,
+.feedback-links a:focus-visible {
+  border-color: var(--accent-strong);
+  background: rgba(0, 209, 189, 0.13);
+}
+
 .pip-settings {
   display: flex;
   align-items: flex-end;
