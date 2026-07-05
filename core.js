@@ -15,6 +15,11 @@ const fileNameCollator = new Intl.Collator("ja", {
   sensitivity: "base",
 });
 
+export function resolveAppVariant(pathname) {
+  const pathParts = typeof pathname === "string" ? pathname.split("/").filter(Boolean) : [];
+  return pathParts.includes("beta") ? "beta" : "stable";
+}
+
 // groupIdsは旧データや単一文字列も受けるため、ここで必ず配列へそろえる。
 export function normalizeCardGroupIds(groupIds) {
   if (Array.isArray(groupIds)) {

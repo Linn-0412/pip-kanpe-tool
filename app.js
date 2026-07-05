@@ -24,6 +24,7 @@ import {
   normalizeIndex,
   removeGroupFromCards,
   reorder as reorderCards,
+  resolveAppVariant,
   resolvePipControlsBackground,
   resolvePipControlsPosition,
   resolvePipControlsSize,
@@ -127,10 +128,16 @@ async function init() {
   bindElements();
   bindEvents();
   applyBrowserGuide();
-  updateVariantBadge();
-  loadSettings();
-  applySettingsToControls();
   updateSupportBadge();
+  updateVariantBadge();
+
+  try {
+    loadSettings();
+    applySettingsToControls();
+  } catch (error) {
+    console.error(error);
+    setStatus("設定を読み込めませんでした。初期設定で起動します。", true);
+  }
 
   try {
     state.db = await openDatabase();
@@ -519,13 +526,7 @@ function isEdgeBrowser() {
 }
 
 function getAppVariant() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("variant") === "beta" || params.has("beta")) {
-    return "beta";
-  }
-
-  const pathParts = window.location.pathname.split("/").filter(Boolean);
-  return pathParts.includes("beta") ? "beta" : "stable";
+  return resolveAppVariant(window.location.pathname);
 }
 
 function getBrowserNameForUrl(url) {

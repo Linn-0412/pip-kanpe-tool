@@ -19,6 +19,7 @@ import {
   normalizeIndex,
   removeGroupFromCards,
   reorder,
+  resolveAppVariant,
   resolvePipControlsBackground,
   resolvePipControlsPosition,
   resolvePipControlsSize,
@@ -53,6 +54,14 @@ test("deck payload helpers normalize export metadata", () => {
   assert.equal(DECK_FILE_EXTENSION, ".pipkanpe");
   assert.equal(sanitizeDeckFileName(' 絶ケフカ:野良? '), "絶ケフカ_野良_");
   assert.equal(sanitizeDeckFileName(""), "pip-kanpe-set");
+});
+
+test("resolveAppVariant treats only the beta directory as beta", () => {
+  assert.equal(resolveAppVariant("/pip-kanpe-tool/"), "stable");
+  assert.equal(resolveAppVariant("/pip-kanpe-tool/index.html"), "stable");
+  assert.equal(resolveAppVariant("/pip-kanpe-tool-beta/"), "stable");
+  assert.equal(resolveAppVariant("/pip-kanpe-tool/beta/"), "beta");
+  assert.equal(resolveAppVariant("/pip-kanpe-tool/beta/index.html"), "beta");
 });
 
 test("normalizeDeckGroups keeps usable unique groups", () => {
