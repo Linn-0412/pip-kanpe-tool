@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.8.2">
-    <script type="module" src="./app.js?v=1.8.2"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.1">
+    <script type="module" src="./app.js?v=1.9.0-beta.1"></script>
   </head>
   <body>
     <header class="app-header">
@@ -41,6 +41,8 @@
             <span>保存時に長辺2048pxへ軽量化</span>
           </label>
         </div>
+
+        <button id="open-maker" class="secondary-button maker-open-button" type="button">カンペを作る（β）</button>
 
         <details class="group-settings deck-tools" aria-label="カンペセット操作">
           <summary>カンペセット</summary>
@@ -313,6 +315,103 @@
 
         <div class="guide-actions">
           <button id="close-guide" class="primary-button" type="button">はじめる</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="maker-modal" class="maker-backdrop" role="dialog" aria-modal="true" aria-labelledby="maker-title" hidden>
+      <section class="maker-dialog">
+        <div class="maker-header">
+          <div>
+            <p class="eyebrow">Beta editor</p>
+            <h2 id="maker-title">カンペを作る</h2>
+          </div>
+          <button id="close-maker" class="mini-button" type="button" aria-label="カンペ作成を閉じる">×</button>
+        </div>
+
+        <div class="maker-workspace">
+          <aside class="maker-tools" aria-label="作成ツール">
+            <label class="maker-field">
+              <span>背景</span>
+              <select id="maker-background">
+                <option value="dark" selected>黒背景</option>
+                <option value="light">白背景</option>
+                <option value="transparent">透明</option>
+              </select>
+            </label>
+
+            <label class="maker-field">
+              <span>色</span>
+              <input id="maker-color" type="color" value="#ffd166">
+            </label>
+
+            <div class="maker-tool-section">
+              <span>図形</span>
+              <div class="maker-button-grid">
+                <button class="secondary-button" type="button" data-maker-add="circle">円</button>
+                <button class="secondary-button" type="button" data-maker-add="rect">四角</button>
+                <button class="secondary-button" type="button" data-maker-add="line">線</button>
+                <button class="secondary-button" type="button" data-maker-add="arrow-up">↑</button>
+                <button class="secondary-button" type="button" data-maker-add="arrow-down">↓</button>
+                <button class="secondary-button" type="button" data-maker-add="arrow-left">←</button>
+                <button class="secondary-button" type="button" data-maker-add="arrow-right">→</button>
+              </div>
+            </div>
+
+            <div class="maker-tool-section">
+              <span>マーカー</span>
+              <div class="maker-button-grid marker-grid">
+                <button class="secondary-button" type="button" data-maker-label="A">A</button>
+                <button class="secondary-button" type="button" data-maker-label="B">B</button>
+                <button class="secondary-button" type="button" data-maker-label="C">C</button>
+                <button class="secondary-button" type="button" data-maker-label="D">D</button>
+                <button class="secondary-button" type="button" data-maker-label="1">1</button>
+                <button class="secondary-button" type="button" data-maker-label="2">2</button>
+                <button class="secondary-button" type="button" data-maker-label="3">3</button>
+                <button class="secondary-button" type="button" data-maker-label="4">4</button>
+              </div>
+            </div>
+
+            <div class="maker-tool-section">
+              <span>ロール</span>
+              <div class="maker-button-grid role-grid">
+                <button class="secondary-button" type="button" data-maker-label="MT">MT</button>
+                <button class="secondary-button" type="button" data-maker-label="ST">ST</button>
+                <button class="secondary-button" type="button" data-maker-label="H1">H1</button>
+                <button class="secondary-button" type="button" data-maker-label="H2">H2</button>
+                <button class="secondary-button" type="button" data-maker-label="D1">D1</button>
+                <button class="secondary-button" type="button" data-maker-label="D2">D2</button>
+                <button class="secondary-button" type="button" data-maker-label="D3">D3</button>
+                <button class="secondary-button" type="button" data-maker-label="D4">D4</button>
+              </div>
+            </div>
+
+            <label class="maker-field">
+              <span>テキスト</span>
+              <input id="maker-text" type="text" maxlength="24" placeholder="例: 外周へ">
+            </label>
+            <button id="maker-add-text" class="secondary-button" type="button">テキスト追加</button>
+
+            <div class="maker-actions">
+              <button id="maker-delete" class="danger-button" type="button">選択を削除</button>
+              <button id="maker-clear" class="danger-button" type="button">全クリア</button>
+              <button id="maker-save" class="primary-button" type="button">画像として登録</button>
+            </div>
+          </aside>
+
+          <div class="maker-stage-wrap">
+            <svg id="maker-canvas" class="maker-canvas" viewBox="0 0 1280 720" role="img" aria-label="カンペ作成キャンバス" tabindex="0">
+              <defs>
+                <pattern id="maker-grid-pattern" width="80" height="80" patternUnits="userSpaceOnUse">
+                  <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
+                </pattern>
+              </defs>
+              <rect id="maker-background-rect" width="1280" height="720" rx="24"></rect>
+              <rect id="maker-grid" width="1280" height="720" rx="24" fill="url(#maker-grid-pattern)"></rect>
+              <g id="maker-items"></g>
+            </svg>
+            <p class="maker-hint">素材を追加してドラッグで配置します。完成したら登録画像に追加できます。</p>
+          </div>
         </div>
       </section>
     </div>

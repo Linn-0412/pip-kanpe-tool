@@ -92,6 +92,10 @@ const EXTENSION_GUIDES = {
 
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MAKER_WIDTH = 1280;
+const MAKER_HEIGHT = 720;
+const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
 
 // メモリ上の唯一の状態。IndexedDBの画像本体、localStorageの設定、PiP小窓をここで束ねる。
 const state = {
@@ -100,6 +104,14 @@ const state = {
   currentIndex: 0,
   objectUrls: new Map(),
   pipWindow: null,
+  maker: {
+    items: [],
+    selectedId: null,
+    drag: null,
+    color: "#ffd166",
+    background: "dark",
+    offset: 0,
+  },
   settings: {
     fitMode: "contain",
     pipSize: "640x360",
@@ -159,6 +171,7 @@ function bindElements() {
     "support-badge",
     "open-guide",
     "open-pip",
+    "open-maker",
     "drop-zone",
     "file-input",
     "pick-files",
@@ -212,6 +225,19 @@ function bindElements() {
     "guide-shortcuts-instruction",
     "guide-shortcuts-copy",
     "guide-extension-note",
+    "maker-modal",
+    "close-maker",
+    "maker-background",
+    "maker-color",
+    "maker-text",
+    "maker-add-text",
+    "maker-delete",
+    "maker-clear",
+    "maker-save",
+    "maker-canvas",
+    "maker-background-rect",
+    "maker-grid",
+    "maker-items",
   ];
 
   ids.forEach((id) => {
@@ -280,6 +306,7 @@ function bindEvents() {
   els.previewStage.addEventListener("click", handlePipControlsHitAreaClick);
   els.openPip.addEventListener("click", openPip);
   els.openGuide.addEventListener("click", showGuideModal);
+  els.openMaker.addEventListener("click", showMakerModal);
   els.clearAll.addEventListener("click", clearAllCards);
   els.closeGuide.addEventListener("click", closeGuideModal);
   els.closeGuideIcon.addEventListener("click", closeGuideModal);
@@ -294,6 +321,31 @@ function bindEvents() {
       closeGuideModal();
     }
   });
+  els.closeMaker.addEventListener("click", closeMakerModal);
+  els.makerModal.addEventListener("click", handleMakerModalClick);
+  els.makerBackground.addEventListener("change", () => {
+    state.maker.background = els.makerBackground.value;
+    renderMaker();
+  });
+  els.makerColor.addEventListener("input", () => {
+    state.maker.color = els.makerColor.value;
+    recolorSelectedMakerItem();
+  });
+  els.makerAddText.addEventListener("click", addMakerText);
+  els.makerText.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    addMakerText();
+  });
+  els.makerDelete.addEventListener("click", deleteSelectedMakerItem);
+  els.makerClear.addEventListener("click", clearMakerItems);
+  els.makerSave.addEventListener("click", saveMakerImage);
+  els.makerCanvas.addEventListener("pointerdown", handleMakerPointerDown);
+  window.addEventListener("pointermove", handleMakerPointerMove);
+  window.addEventListener("pointerup", handleMakerPointerUp);
 
   els.fitMode.addEventListener("change", () => {
     state.settings.fitMode = els.fitMode.value;
@@ -432,6 +484,11 @@ function bindEvents() {
   els.deleteGroup.addEventListener("click", deleteGroup);
 
   window.addEventListener("keydown", (event) => {
+    if (!els.makerModal.hidden) {
+      handleMakerKeydown(event);
+      return;
+    }
+
     if (!els.guideModal.hidden && event.key === "Escape") {
       closeGuideModal();
       return;
@@ -458,7 +515,7 @@ function bindEvents() {
 
 // Ctrl+Vで受け取った画像をFileとして扱い、通常のファイル追加処理へ流す。
 async function handlePaste(event) {
-  if (!els.guideModal.hidden) {
+  if (!els.guideModal.hidden || !els.makerModal.hidden) {
     return;
   }
 
@@ -575,6 +632,521 @@ async function copyGuideUrl(button) {
   window.setTimeout(() => {
     button.textContent = originalText;
   }, 1600);
+}
+
+function showMakerModal() {
+  els.makerModal.hidden = false;
+  document.body.classList.add("modal-open");
+  renderMaker();
+  els.makerCanvas.focus();
+}
+
+function closeMakerModal() {
+  state.maker.drag = null;
+  els.makerModal.hidden = true;
+  document.body.classList.remove("modal-open");
+  els.openMaker.focus();
+}
+
+function handleMakerModalClick(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) {
+    return;
+  }
+
+  const addButton = target.closest("[data-maker-add]");
+  if (addButton instanceof HTMLButtonElement) {
+    addMakerItem(addButton.dataset.makerAdd);
+    return;
+  }
+
+  const labelButton = target.closest("[data-maker-label]");
+  if (labelButton instanceof HTMLButtonElement) {
+    addMakerLabel(labelButton.dataset.makerLabel);
+    return;
+  }
+
+  if (event.target === els.makerModal) {
+    closeMakerModal();
+  }
+}
+
+function handleMakerKeydown(event) {
+  if (event.key === "Escape") {
+    closeMakerModal();
+    return;
+  }
+
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (event.target instanceof Element && event.target.matches("input, textarea")) {
+      return;
+    }
+
+    event.preventDefault();
+    deleteSelectedMakerItem();
+  }
+}
+
+function addMakerItem(kind) {
+  if (!kind) {
+    return;
+  }
+
+  const point = getMakerSpawnPoint();
+  const item = {
+    id: createMakerItemId(),
+    type: kind.startsWith("arrow-") ? "arrow" : kind,
+    direction: kind.replace("arrow-", ""),
+    x: point.x,
+    y: point.y,
+    color: state.maker.color,
+  };
+
+  state.maker.items = [...state.maker.items, item];
+  state.maker.selectedId = item.id;
+  renderMaker();
+}
+
+function addMakerLabel(label) {
+  if (!label) {
+    return;
+  }
+
+  const point = getMakerSpawnPoint();
+  const item = {
+    id: createMakerItemId(),
+    type: "label",
+    label,
+    x: point.x,
+    y: point.y,
+    color: state.maker.color,
+  };
+
+  state.maker.items = [...state.maker.items, item];
+  state.maker.selectedId = item.id;
+  renderMaker();
+}
+
+function addMakerText() {
+  const label = els.makerText.value.trim().replace(/\s+/g, " ") || "テキスト";
+  const point = getMakerSpawnPoint();
+  const item = {
+    id: createMakerItemId(),
+    type: "text",
+    label,
+    x: point.x,
+    y: point.y,
+    color: state.maker.color,
+  };
+
+  state.maker.items = [...state.maker.items, item];
+  state.maker.selectedId = item.id;
+  els.makerText.value = "";
+  renderMaker();
+}
+
+function createMakerItemId() {
+  return `maker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getMakerSpawnPoint() {
+  const offset = (state.maker.offset % 8) * 24;
+  state.maker.offset += 1;
+  return {
+    x: Math.min(MAKER_WIDTH - 120, MAKER_CENTER.x + offset),
+    y: Math.min(MAKER_HEIGHT - 90, MAKER_CENTER.y + offset),
+  };
+}
+
+function recolorSelectedMakerItem() {
+  const selected = getSelectedMakerItem();
+  if (!selected) {
+    return;
+  }
+
+  selected.color = state.maker.color;
+  renderMaker();
+}
+
+function deleteSelectedMakerItem() {
+  if (!state.maker.selectedId) {
+    return;
+  }
+
+  state.maker.items = state.maker.items.filter((item) => item.id !== state.maker.selectedId);
+  state.maker.selectedId = null;
+  renderMaker();
+}
+
+function clearMakerItems() {
+  if (state.maker.items.length === 0) {
+    return;
+  }
+
+  const ok = confirm("作成中のカンペを全て消します。よろしいですか？");
+  if (!ok) {
+    return;
+  }
+
+  state.maker.items = [];
+  state.maker.selectedId = null;
+  renderMaker();
+}
+
+function renderMaker() {
+  if (!els.makerItems) {
+    return;
+  }
+
+  state.maker.background = els.makerBackground.value;
+  state.maker.color = els.makerColor.value;
+  applyMakerBackground();
+  els.makerItems.textContent = "";
+
+  state.maker.items.forEach((item) => {
+    els.makerItems.append(createMakerElement(item));
+  });
+
+  els.makerDelete.disabled = !state.maker.selectedId;
+  els.makerClear.disabled = state.maker.items.length === 0;
+  els.makerSave.disabled = state.maker.items.length === 0;
+}
+
+function applyMakerBackground() {
+  const fills = {
+    dark: "#101010",
+    light: "#f4f4f4",
+    transparent: "transparent",
+  };
+
+  els.makerBackgroundRect.setAttribute("fill", fills[state.maker.background] ?? fills.dark);
+  els.makerBackgroundRect.setAttribute("display", state.maker.background === "transparent" ? "none" : "block");
+  els.makerGrid.setAttribute("display", state.maker.background === "transparent" ? "none" : "block");
+  els.makerGrid.setAttribute("opacity", state.maker.background === "light" ? "0.24" : "1");
+}
+
+function createMakerElement(item) {
+  const group = createSvgElement("g", {
+    class: `maker-item${item.id === state.maker.selectedId ? " selected" : ""}`,
+    transform: `translate(${item.x} ${item.y})`,
+    "data-maker-id": item.id,
+  });
+
+  if (item.type === "circle") {
+    group.append(
+      createSvgElement("circle", {
+        cx: 0,
+        cy: 0,
+        r: 88,
+        fill: hexToRgba(item.color, 0.24),
+        stroke: item.color,
+        "stroke-width": 8,
+      }),
+    );
+  } else if (item.type === "rect") {
+    group.append(
+      createSvgElement("rect", {
+        x: -130,
+        y: -76,
+        width: 260,
+        height: 152,
+        rx: 20,
+        fill: hexToRgba(item.color, 0.24),
+        stroke: item.color,
+        "stroke-width": 8,
+      }),
+    );
+  } else if (item.type === "line") {
+    group.append(
+      createSvgElement("line", {
+        x1: -150,
+        y1: 0,
+        x2: 150,
+        y2: 0,
+        stroke: item.color,
+        "stroke-width": 16,
+        "stroke-linecap": "round",
+      }),
+    );
+  } else if (item.type === "arrow") {
+    appendMakerArrow(group, item);
+  } else if (item.type === "label") {
+    appendMakerLabel(group, item);
+  } else {
+    appendMakerText(group, item);
+  }
+
+  return group;
+}
+
+function appendMakerArrow(group, item) {
+  const points = getMakerArrowPoints(item.direction);
+  group.append(
+    createSvgElement("line", {
+      x1: points.line[0],
+      y1: points.line[1],
+      x2: points.line[2],
+      y2: points.line[3],
+      stroke: item.color,
+      "stroke-width": 18,
+      "stroke-linecap": "round",
+    }),
+    createSvgElement("polygon", {
+      points: points.head,
+      fill: item.color,
+    }),
+  );
+}
+
+function getMakerArrowPoints(direction) {
+  if (direction === "down") {
+    return { line: [0, -130, 0, 90], head: "0,150 -54,66 54,66" };
+  }
+  if (direction === "left") {
+    return { line: [130, 0, -90, 0], head: "-150,0 -66,-54 -66,54" };
+  }
+  if (direction === "right") {
+    return { line: [-130, 0, 90, 0], head: "150,0 66,-54 66,54" };
+  }
+
+  return { line: [0, 130, 0, -90], head: "0,-150 -54,-66 54,-66" };
+}
+
+function appendMakerLabel(group, item) {
+  const wide = item.label.length > 1;
+  if (wide) {
+    group.append(
+      createSvgElement("rect", {
+        x: -74,
+        y: -40,
+        width: 148,
+        height: 80,
+        rx: 40,
+        fill: item.color,
+        stroke: "rgba(255,255,255,0.85)",
+        "stroke-width": 5,
+      }),
+    );
+  } else {
+    group.append(
+      createSvgElement("circle", {
+        cx: 0,
+        cy: 0,
+        r: 50,
+        fill: item.color,
+        stroke: "rgba(255,255,255,0.85)",
+        "stroke-width": 5,
+      }),
+    );
+  }
+
+  group.append(
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: wide ? 2 : 3,
+        fill: "#ffffff",
+        "font-size": wide ? 36 : 44,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.75)",
+        "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      item.label,
+    ),
+  );
+}
+
+function appendMakerText(group, item) {
+  group.append(
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 0,
+        fill: item.color,
+        "font-size": 48,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.82)",
+        "stroke-width": 9,
+        "stroke-linejoin": "round",
+      },
+      item.label,
+    ),
+  );
+}
+
+function createSvgElement(name, attributes = {}, text = "") {
+  const element = document.createElementNS(SVG_NS, name);
+  Object.entries(attributes).forEach(([key, value]) => {
+    element.setAttribute(key, String(value));
+  });
+  if (text) {
+    element.textContent = text;
+  }
+  return element;
+}
+
+function hexToRgba(hex, alpha) {
+  const normalized = hex.replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) {
+    return `rgba(255, 209, 102, ${alpha})`;
+  }
+
+  const value = Number.parseInt(normalized, 16);
+  const red = (value >> 16) & 255;
+  const green = (value >> 8) & 255;
+  const blue = value & 255;
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function handleMakerPointerDown(event) {
+  if (els.makerModal.hidden) {
+    return;
+  }
+
+  const target = event.target instanceof Element ? event.target.closest(".maker-item") : null;
+  if (!target) {
+    state.maker.selectedId = null;
+    renderMaker();
+    return;
+  }
+
+  const item = getMakerItemById(target.getAttribute("data-maker-id"));
+  if (!item) {
+    return;
+  }
+
+  const point = getMakerPointerPoint(event);
+  state.maker.selectedId = item.id;
+  state.maker.drag = {
+    id: item.id,
+    offsetX: point.x - item.x,
+    offsetY: point.y - item.y,
+  };
+  event.preventDefault();
+  renderMaker();
+}
+
+function handleMakerPointerMove(event) {
+  const drag = state.maker.drag;
+  if (!drag) {
+    return;
+  }
+
+  const item = getMakerItemById(drag.id);
+  if (!item) {
+    state.maker.drag = null;
+    return;
+  }
+
+  const point = getMakerPointerPoint(event);
+  item.x = clamp(point.x - drag.offsetX, 40, MAKER_WIDTH - 40);
+  item.y = clamp(point.y - drag.offsetY, 40, MAKER_HEIGHT - 40);
+  renderMaker();
+}
+
+function handleMakerPointerUp() {
+  state.maker.drag = null;
+}
+
+function getMakerPointerPoint(event) {
+  const rect = els.makerCanvas.getBoundingClientRect();
+  return {
+    x: ((event.clientX - rect.left) / rect.width) * MAKER_WIDTH,
+    y: ((event.clientY - rect.top) / rect.height) * MAKER_HEIGHT,
+  };
+}
+
+function getMakerItemById(id) {
+  return state.maker.items.find((item) => item.id === id) ?? null;
+}
+
+function getSelectedMakerItem() {
+  return getMakerItemById(state.maker.selectedId);
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+async function saveMakerImage() {
+  if (state.maker.items.length === 0) {
+    setStatus("作成する素材を追加してください。", true);
+    return;
+  }
+
+  try {
+    setStatus("作成したカンペを画像化しています...");
+    const blob = await makerSvgToPngBlob();
+    const file = new File([blob], createMakerImageFileName(), {
+      type: "image/png",
+      lastModified: Date.now(),
+    });
+    await addFiles([file], {
+      sortFiles: false,
+      progressMessage: () => "作成したカンペを登録中...",
+      completeMessage: () => "作成したカンペを登録しました。",
+    });
+    closeMakerModal();
+  } catch (error) {
+    console.error(error);
+    setStatus("作成したカンペを画像化できませんでした。", true);
+  }
+}
+
+function makerSvgToPngBlob() {
+  return new Promise((resolve, reject) => {
+    const svg = els.makerCanvas.cloneNode(true);
+    svg.setAttribute("xmlns", SVG_NS);
+    svg.setAttribute("width", MAKER_WIDTH);
+    svg.setAttribute("height", MAKER_HEIGHT);
+    svg.querySelectorAll(".maker-item").forEach((item) => item.classList.remove("selected"));
+
+    const svgText = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = MAKER_WIDTH;
+      canvas.height = MAKER_HEIGHT;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        reject(new Error("Canvas context unavailable"));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, MAKER_WIDTH, MAKER_HEIGHT);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Canvas export failed"));
+        }
+      }, "image/png");
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("SVG export failed"));
+    };
+    image.src = url;
+  });
+}
+
+function createMakerImageFileName() {
+  const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  return `made-kanpe-${timestamp}.png`;
 }
 
 // Chrome / Edge拡張機能のショートカットから届くコマンドをアプリ操作へ変換する。
