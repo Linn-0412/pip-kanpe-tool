@@ -101,6 +101,7 @@ const ROLE_COLORS = {
   healer: "#55d989",
   dps: "#ff5a70",
 };
+const BOSS_MARKER_COLOR = "#ff5a70";
 const DICE_COLORS = ["#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a"];
 const FIELD_MARKER_ASSETS = [
   { id: "a", label: "A", color: "#ff5f8f" },
@@ -853,7 +854,7 @@ function addMakerItem(kind) {
     direction: kind.replace("arrow-", ""),
     x: point.x,
     y: point.y,
-    color: state.maker.color,
+    color: kind === "boss" ? BOSS_MARKER_COLOR : state.maker.color,
     scale: 1,
     rotation: 0,
   };
@@ -959,11 +960,10 @@ function addMakerGimmickTemplate(templateId) {
   ];
   const boss = {
     id: createMakerItemId(),
-    type: "text",
-    label: "BOSS",
+    type: "boss",
     x: MAKER_CENTER.x,
     y: MAKER_CENTER.y,
-    color: "#f4f4f4",
+    color: BOSS_MARKER_COLOR,
     scale: 1,
     rotation: 0,
   };
@@ -1256,6 +1256,8 @@ function createMakerElement(item) {
         "stroke-linecap": "round",
       }),
     );
+  } else if (item.type === "boss") {
+    appendMakerBoss(group, item);
   } else if (item.type === "arrow") {
     appendMakerArrow(group, item);
   } else if (item.type === "label") {
@@ -1304,6 +1306,61 @@ function getMakerArrowPoints(direction) {
   }
 
   return { line: [0, 130, 0, -90], head: "0,-150 -54,-66 54,-66" };
+}
+
+function appendMakerBoss(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 86,
+      fill: hexToRgba(item.color, 0.16),
+      stroke: item.color,
+      "stroke-width": 8,
+    }),
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 60,
+      fill: "rgba(18, 20, 20, 0.76)",
+      stroke: hexToRgba(item.color, 0.68),
+      "stroke-width": 5,
+    }),
+    createSvgElement("path", {
+      d: "M 0 -78 L 14 -46 L 0 -54 L -14 -46 Z",
+      fill: item.color,
+    }),
+    createSvgElement("path", {
+      d: "M 78 0 L 46 14 L 54 0 L 46 -14 Z",
+      fill: item.color,
+    }),
+    createSvgElement("path", {
+      d: "M 0 78 L -14 46 L 0 54 L 14 46 Z",
+      fill: item.color,
+    }),
+    createSvgElement("path", {
+      d: "M -78 0 L -46 -14 L -54 0 L -46 14 Z",
+      fill: item.color,
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 4,
+        fill: "#ffffff",
+        "font-size": 38,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      "ボス",
+    ),
+  );
 }
 
 function appendMakerLabel(group, item) {
