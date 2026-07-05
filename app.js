@@ -130,6 +130,7 @@ const GIMMICK_ASSETS = [
   { id: "circle-aoe", label: "円範囲", short: "円", color: "#ff5a70" },
   { id: "donut", label: "ドーナツ", short: "輪", color: "#ff7a45" },
   { id: "safe", label: "安置", short: "安", color: "#00d1bd" },
+  { id: "half-room", label: "半面焼き", short: "半", color: "#ff8a3d" },
   ...DICE_GIMMICK_ASSETS,
   { id: "eight-spread", label: "8方向散開", short: "8散", color: "#ff6b4a", template: true },
   { id: "dice-set", label: "サイコロ1-8", short: "1-8", color: "#ffd166", template: true },
@@ -1485,6 +1486,10 @@ function appendMakerGimmick(group, item) {
     appendMakerSafe(group, item);
     return;
   }
+  if (item.gimmickId === "half-room") {
+    appendMakerHalfRoom(group, item);
+    return;
+  }
 
   appendMakerGimmickBadge(group, item);
 }
@@ -1524,6 +1529,81 @@ function appendMakerDice(group, item) {
         "stroke-linejoin": "round",
       },
       label,
+    ),
+  );
+}
+
+function appendMakerHalfRoom(group, item) {
+  group.append(
+    createSvgElement("rect", {
+      x: -190,
+      y: -118,
+      width: 380,
+      height: 236,
+      rx: 18,
+      fill: "rgba(18, 20, 20, 0.64)",
+      stroke: "rgba(255,255,255,0.42)",
+      "stroke-width": 5,
+    }),
+    createSvgElement("path", {
+      d: "M 0 -118 H 172 Q 190 -118 190 -100 V 100 Q 190 118 172 118 H 0 Z",
+      fill: hexToRgba(item.color, 0.34),
+      stroke: item.color,
+      "stroke-width": 7,
+      "stroke-linejoin": "round",
+    }),
+    createSvgElement("line", {
+      x1: 0,
+      y1: -118,
+      x2: 0,
+      y2: 118,
+      stroke: "rgba(255,255,255,0.72)",
+      "stroke-width": 5,
+      "stroke-dasharray": "14 10",
+    }),
+    createSvgElement("path", {
+      d: "M 58 -66 L 134 0 L 58 66",
+      fill: "none",
+      stroke: item.color,
+      "stroke-width": 12,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: -78,
+        y: 4,
+        fill: "#ffffff",
+        "font-size": 36,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      "安置",
+    ),
+    createSvgElement(
+      "text",
+      {
+        x: 96,
+        y: 4,
+        fill: item.color,
+        "font-size": 42,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      "焼き",
     ),
   );
 }
