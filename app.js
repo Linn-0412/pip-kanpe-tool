@@ -96,6 +96,12 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const MAKER_WIDTH = 1280;
 const MAKER_HEIGHT = 720;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
+const ROLE_COLORS = {
+  tank: "#4db8ff",
+  healer: "#55d989",
+  dps: "#ff5a70",
+};
+const DICE_COLORS = ["#ff5a70", "#f3d64e", "#6bb7ff", "#d78bff", "#ff5a70", "#f3d64e", "#6bb7ff", "#d78bff"];
 const FIELD_MARKER_ASSETS = [
   { id: "a", label: "A", color: "#ff5f8f" },
   { id: "b", label: "B", color: "#f3d64e" },
@@ -106,6 +112,13 @@ const FIELD_MARKER_ASSETS = [
   { id: "three", label: "3", color: "#6bb7ff" },
   { id: "four", label: "4", color: "#d78bff" },
 ];
+const DICE_GIMMICK_ASSETS = Array.from({ length: 8 }, (_, index) => ({
+  id: `dice-${index + 1}`,
+  label: `サイコロ${index + 1}`,
+  short: String(index + 1),
+  color: DICE_COLORS[index],
+  dice: index + 1,
+}));
 const GIMMICK_ASSETS = [
   { id: "stack", label: "頭割り", short: "頭", color: "#4db8ff" },
   { id: "spread", label: "散開", short: "散", color: "#ff6b4a" },
@@ -116,7 +129,9 @@ const GIMMICK_ASSETS = [
   { id: "circle-aoe", label: "円範囲", short: "円", color: "#ff5a70" },
   { id: "donut", label: "ドーナツ", short: "輪", color: "#ff7a45" },
   { id: "safe", label: "安置", short: "安", color: "#00d1bd" },
+  ...DICE_GIMMICK_ASSETS,
   { id: "eight-spread", label: "8方向散開", short: "8散", color: "#ff6b4a", template: true },
+  { id: "dice-set", label: "サイコロ1-8", short: "1-8", color: "#ffd166", template: true },
 ];
 const JOB_ICON_ASSETS = [
   { id: "tank-role", label: "TANK", name: "Tank", src: "./assets/maker/official/jobs/TankRole.png" },
@@ -278,6 +293,11 @@ function bindElements() {
     "close-maker",
     "maker-background",
     "maker-color",
+    "maker-size",
+    "maker-size-value",
+    "maker-rotation",
+    "maker-rotation-value",
+    "maker-reset-transform",
     "maker-text",
     "maker-field-markers",
     "maker-gimmicks",
@@ -383,6 +403,9 @@ function bindEvents() {
     state.maker.color = els.makerColor.value;
     recolorSelectedMakerItem();
   });
+  els.makerSize.addEventListener("input", updateSelectedMakerTransform);
+  els.makerRotation.addEventListener("input", updateSelectedMakerTransform);
+  els.makerResetTransform.addEventListener("click", resetSelectedMakerTransform);
   els.makerAddText.addEventListener("click", addMakerText);
   els.makerText.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") {
@@ -831,6 +854,8 @@ function addMakerItem(kind) {
     x: point.x,
     y: point.y,
     color: state.maker.color,
+    scale: 1,
+    rotation: 0,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -850,7 +875,9 @@ function addMakerLabel(label) {
     label,
     x: point.x,
     y: point.y,
-    color: state.maker.color,
+    color: getMakerRoleColor(label) ?? state.maker.color,
+    scale: 1,
+    rotation: 0,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -872,6 +899,8 @@ function addMakerFieldMarker(markerId) {
     color: marker.color,
     x: point.x,
     y: point.y,
+    scale: 1,
+    rotation: 0,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -899,6 +928,8 @@ function addMakerGimmick(gimmickId) {
     color: gimmick.color,
     x: point.x,
     y: point.y,
+    scale: 1,
+    rotation: 0,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -907,19 +938,24 @@ function addMakerGimmick(gimmickId) {
 }
 
 function addMakerGimmickTemplate(templateId) {
+  if (templateId === "dice-set") {
+    addMakerDiceSetTemplate();
+    return;
+  }
+
   if (templateId !== "eight-spread") {
     return;
   }
 
   const roles = [
-    { label: "MT", x: MAKER_CENTER.x, y: 140, color: "#4db8ff" },
-    { label: "D1", x: MAKER_CENTER.x + 190, y: 200, color: "#ff8a3d" },
-    { label: "H1", x: MAKER_CENTER.x + 285, y: MAKER_CENTER.y, color: "#55d989" },
-    { label: "D2", x: MAKER_CENTER.x + 190, y: 520, color: "#ff8a3d" },
-    { label: "ST", x: MAKER_CENTER.x, y: 580, color: "#4db8ff" },
-    { label: "D3", x: MAKER_CENTER.x - 190, y: 520, color: "#ff8a3d" },
-    { label: "H2", x: MAKER_CENTER.x - 285, y: MAKER_CENTER.y, color: "#55d989" },
-    { label: "D4", x: MAKER_CENTER.x - 190, y: 200, color: "#ff8a3d" },
+    { label: "MT", x: MAKER_CENTER.x, y: 140 },
+    { label: "D1", x: MAKER_CENTER.x + 190, y: 200 },
+    { label: "H1", x: MAKER_CENTER.x + 285, y: MAKER_CENTER.y },
+    { label: "D2", x: MAKER_CENTER.x + 190, y: 520 },
+    { label: "ST", x: MAKER_CENTER.x, y: 580 },
+    { label: "D3", x: MAKER_CENTER.x - 190, y: 520 },
+    { label: "H2", x: MAKER_CENTER.x - 285, y: MAKER_CENTER.y },
+    { label: "D4", x: MAKER_CENTER.x - 190, y: 200 },
   ];
   const boss = {
     id: createMakerItemId(),
@@ -928,15 +964,42 @@ function addMakerGimmickTemplate(templateId) {
     x: MAKER_CENTER.x,
     y: MAKER_CENTER.y,
     color: "#f4f4f4",
+    scale: 1,
+    rotation: 0,
   };
   const items = roles.map((role) => ({
     id: createMakerItemId(),
     type: "label",
+    color: getMakerRoleColor(role.label),
+    scale: 1,
+    rotation: 0,
     ...role,
   }));
 
   state.maker.items = [...state.maker.items, boss, ...items];
   state.maker.selectedId = items[items.length - 1]?.id ?? boss.id;
+  renderMaker();
+}
+
+function addMakerDiceSetTemplate() {
+  const diceItems = DICE_GIMMICK_ASSETS.map((dice, index) => {
+    const column = index % 4;
+    const row = Math.floor(index / 4);
+    return {
+      id: createMakerItemId(),
+      type: "gimmick",
+      gimmickId: dice.id,
+      label: dice.short,
+      color: dice.color,
+      x: MAKER_CENTER.x - 240 + column * 160,
+      y: MAKER_CENTER.y - 90 + row * 180,
+      scale: 1,
+      rotation: 0,
+    };
+  });
+
+  state.maker.items = [...state.maker.items, ...diceItems];
+  state.maker.selectedId = diceItems[diceItems.length - 1]?.id ?? null;
   renderMaker();
 }
 
@@ -956,6 +1019,8 @@ async function addMakerJobIcon(assetId) {
       x: point.x,
       y: point.y,
       href,
+      scale: 1,
+      rotation: 0,
     };
 
     state.maker.items = [...state.maker.items, item];
@@ -991,6 +1056,8 @@ function addMakerText() {
     x: point.x,
     y: point.y,
     color: state.maker.color,
+    scale: 1,
+    rotation: 0,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -1010,6 +1077,72 @@ function getMakerSpawnPoint() {
     x: Math.min(MAKER_WIDTH - 120, MAKER_CENTER.x + offset),
     y: Math.min(MAKER_HEIGHT - 90, MAKER_CENTER.y + offset),
   };
+}
+
+function getMakerRoleColor(label) {
+  if (label === "MT" || label === "ST") {
+    return ROLE_COLORS.tank;
+  }
+  if (label === "H1" || label === "H2") {
+    return ROLE_COLORS.healer;
+  }
+  if (/^D[1-4]$/.test(label)) {
+    return ROLE_COLORS.dps;
+  }
+  return null;
+}
+
+function getMakerItemScale(item) {
+  const scale = Number(item?.scale);
+  return Number.isFinite(scale) ? clamp(scale, 0.5, 1.8) : 1;
+}
+
+function getMakerItemRotation(item) {
+  const rotation = Number(item?.rotation);
+  return Number.isFinite(rotation) ? rotation : 0;
+}
+
+function updateSelectedMakerTransform() {
+  const selected = getSelectedMakerItem();
+  if (!selected) {
+    syncMakerSelectionControls();
+    return;
+  }
+
+  selected.scale = Number(els.makerSize.value) / 100;
+  selected.rotation = Number(els.makerRotation.value);
+  renderMaker();
+}
+
+function resetSelectedMakerTransform() {
+  const selected = getSelectedMakerItem();
+  if (!selected) {
+    syncMakerSelectionControls();
+    return;
+  }
+
+  selected.scale = 1;
+  selected.rotation = 0;
+  renderMaker();
+}
+
+function syncMakerSelectionControls() {
+  if (!els.makerSize || !els.makerRotation) {
+    return;
+  }
+
+  const selected = getSelectedMakerItem();
+  const hasSelection = Boolean(selected);
+  const scalePercent = selected ? Math.round(getMakerItemScale(selected) * 100) : 100;
+  const rotation = selected ? Math.round(getMakerItemRotation(selected)) : 0;
+
+  els.makerSize.disabled = !hasSelection;
+  els.makerRotation.disabled = !hasSelection;
+  els.makerResetTransform.disabled = !hasSelection;
+  els.makerSize.value = String(scalePercent);
+  els.makerRotation.value = String(rotation);
+  els.makerSizeValue.textContent = `${scalePercent}%`;
+  els.makerRotationValue.textContent = `${rotation}°`;
 }
 
 function recolorSelectedMakerItem() {
@@ -1064,6 +1197,7 @@ function renderMaker() {
   els.makerDelete.disabled = !state.maker.selectedId;
   els.makerClear.disabled = state.maker.items.length === 0;
   els.makerSave.disabled = state.maker.items.length === 0;
+  syncMakerSelectionControls();
 }
 
 function applyMakerBackground() {
@@ -1082,7 +1216,7 @@ function applyMakerBackground() {
 function createMakerElement(item) {
   const group = createSvgElement("g", {
     class: `maker-item${item.id === state.maker.selectedId ? " selected" : ""}`,
-    transform: `translate(${item.x} ${item.y})`,
+    transform: `translate(${item.x} ${item.y}) rotate(${getMakerItemRotation(item)}) scale(${getMakerItemScale(item)})`,
     "data-maker-id": item.id,
   });
 
@@ -1262,6 +1396,10 @@ function appendMakerFieldMarker(group, item) {
 }
 
 function appendMakerGimmick(group, item) {
+  if (item.gimmickId?.startsWith("dice-")) {
+    appendMakerDice(group, item);
+    return;
+  }
   if (item.gimmickId === "cone") {
     appendMakerCone(group, item);
     return;
@@ -1292,6 +1430,45 @@ function appendMakerGimmick(group, item) {
   }
 
   appendMakerGimmickBadge(group, item);
+}
+
+function appendMakerDice(group, item) {
+  const label = String(item.label ?? item.gimmickId?.replace("dice-", "") ?? "");
+  group.append(
+    createSvgElement("polygon", {
+      points: "0,-72 72,0 0,72 -72,0",
+      fill: hexToRgba(item.color, 0.24),
+      stroke: item.color,
+      "stroke-width": 8,
+      "stroke-linejoin": "round",
+    }),
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 46,
+      fill: "rgba(18, 20, 20, 0.74)",
+      stroke: hexToRgba(item.color, 0.72),
+      "stroke-width": 5,
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 4,
+        fill: item.color,
+        "font-size": 52,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.9)",
+        "stroke-width": 9,
+        "stroke-linejoin": "round",
+      },
+      label,
+    ),
+  );
 }
 
 function appendMakerGimmickBadge(group, item) {

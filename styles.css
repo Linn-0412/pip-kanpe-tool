@@ -636,6 +636,15 @@ input[type="color"] {
   background: #171717;
 }
 
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+input[type="range"]:disabled {
+  opacity: 0.45;
+}
+
 /* Shared buttons */
 .primary-button,
 .secondary-button,
@@ -950,6 +959,26 @@ body.modal-open {
   font-weight: 700;
 }
 
+.maker-transform-controls {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.maker-transform-controls .maker-field > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.maker-transform-controls output {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .maker-button-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -967,6 +996,30 @@ body.modal-open {
   min-height: 2.25rem;
   padding: 0 0.55rem;
   font-weight: 800;
+}
+
+.role-grid [data-maker-label] {
+  --role-color: var(--accent);
+  border-color: color-mix(in srgb, var(--role-color) 42%, var(--line));
+  color: var(--role-color);
+  background: color-mix(in srgb, var(--role-color) 12%, #242424);
+}
+
+.role-grid [data-maker-label="MT"],
+.role-grid [data-maker-label="ST"] {
+  --role-color: #4db8ff;
+}
+
+.role-grid [data-maker-label="H1"],
+.role-grid [data-maker-label="H2"] {
+  --role-color: #55d989;
+}
+
+.role-grid [data-maker-label="D1"],
+.role-grid [data-maker-label="D2"],
+.role-grid [data-maker-label="D3"],
+.role-grid [data-maker-label="D4"] {
+  --role-color: #ff5a70;
 }
 
 .maker-marker-button {
