@@ -609,19 +609,18 @@ function updateSupportBadge() {
 
 // β版URLでは正式版と別の保存領域を使うことを画面上でも明示する。
 function updateVariantBadge() {
-  if (els.betaFeedback) {
-    els.betaFeedback.hidden = !IS_BETA;
-  }
-
-  if (els.variantBadge) {
-    els.variantBadge.hidden = !IS_BETA;
-  }
-
   if (!IS_BETA) {
+    els.betaFeedback?.remove();
+    els.variantBadge?.remove();
     return;
   }
 
+  if (els.betaFeedback) {
+    els.betaFeedback.hidden = false;
+  }
+
   if (els.variantBadge) {
+    els.variantBadge.hidden = false;
     els.variantBadge.textContent = "β版";
   }
   if (!document.title.startsWith("β版 ")) {
