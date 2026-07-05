@@ -96,6 +96,16 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const MAKER_WIDTH = 1280;
 const MAKER_HEIGHT = 720;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
+const FIELD_MARKER_ASSETS = [
+  { id: "a", label: "A", color: "#ff5f8f" },
+  { id: "b", label: "B", color: "#f3d64e" },
+  { id: "c", label: "C", color: "#6bb7ff" },
+  { id: "d", label: "D", color: "#d78bff" },
+  { id: "one", label: "1", color: "#ff5f8f" },
+  { id: "two", label: "2", color: "#f3d64e" },
+  { id: "three", label: "3", color: "#6bb7ff" },
+  { id: "four", label: "4", color: "#d78bff" },
+];
 const JOB_ICON_ASSETS = [
   { id: "tank-role", label: "TANK", name: "Tank", src: "./assets/maker/official/jobs/TankRole.png" },
   { id: "healer-role", label: "HEAL", name: "Healer", src: "./assets/maker/official/jobs/HealerRole.png" },
@@ -257,6 +267,7 @@ function bindElements() {
     "maker-background",
     "maker-color",
     "maker-text",
+    "maker-field-markers",
     "maker-job-icons",
     "maker-add-text",
     "maker-delete",
@@ -677,6 +688,23 @@ function closeMakerModal() {
 }
 
 function buildMakerAssetPalette() {
+  els.makerFieldMarkers.textContent = "";
+  FIELD_MARKER_ASSETS.forEach((marker) => {
+    const button = document.createElement("button");
+    button.className = "secondary-button maker-marker-button";
+    button.type = "button";
+    button.title = `フィールドマーカー ${marker.label}`;
+    button.dataset.makerMarker = marker.id;
+
+    const mark = document.createElement("span");
+    mark.className = "maker-marker-preview";
+    mark.style.setProperty("--marker-color", marker.color);
+    mark.textContent = marker.label;
+
+    button.append(mark);
+    els.makerFieldMarkers.append(button);
+  });
+
   els.makerJobIcons.textContent = "";
 
   JOB_ICON_ASSETS.forEach((asset) => {
@@ -714,6 +742,12 @@ async function handleMakerModalClick(event) {
   const labelButton = target.closest("[data-maker-label]");
   if (labelButton instanceof HTMLButtonElement) {
     addMakerLabel(labelButton.dataset.makerLabel);
+    return;
+  }
+
+  const markerButton = target.closest("[data-maker-marker]");
+  if (markerButton instanceof HTMLButtonElement) {
+    addMakerFieldMarker(markerButton.dataset.makerMarker);
     return;
   }
 
@@ -777,6 +811,27 @@ function addMakerLabel(label) {
     x: point.x,
     y: point.y,
     color: state.maker.color,
+  };
+
+  state.maker.items = [...state.maker.items, item];
+  state.maker.selectedId = item.id;
+  renderMaker();
+}
+
+function addMakerFieldMarker(markerId) {
+  const marker = FIELD_MARKER_ASSETS.find((item) => item.id === markerId);
+  if (!marker) {
+    return;
+  }
+
+  const point = getMakerSpawnPoint();
+  const item = {
+    id: createMakerItemId(),
+    type: "field-marker",
+    label: marker.label,
+    color: marker.color,
+    x: point.x,
+    y: point.y,
   };
 
   state.maker.items = [...state.maker.items, item];
@@ -970,6 +1025,8 @@ function createMakerElement(item) {
     appendMakerArrow(group, item);
   } else if (item.type === "label") {
     appendMakerLabel(group, item);
+  } else if (item.type === "field-marker") {
+    appendMakerFieldMarker(group, item);
   } else if (item.type === "image") {
     appendMakerImage(group, item);
   } else {
@@ -1055,6 +1112,45 @@ function appendMakerLabel(group, item) {
         "paint-order": "stroke",
         stroke: "rgba(0,0,0,0.75)",
         "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      item.label,
+    ),
+  );
+}
+
+function appendMakerFieldMarker(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 58,
+      fill: hexToRgba(item.color, 0.14),
+      stroke: hexToRgba(item.color, 0.45),
+      "stroke-width": 5,
+    }),
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 48,
+      fill: "rgba(18, 20, 20, 0.72)",
+      stroke: item.color,
+      "stroke-width": 7,
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 3,
+        fill: item.color,
+        "font-size": item.label.length > 1 ? 40 : 48,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.88)",
+        "stroke-width": 7,
         "stroke-linejoin": "round",
       },
       item.label,
