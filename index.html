@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.10">
-    <script type="module" src="./app.js?v=1.9.0-beta.10"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.11">
+    <script type="module" src="./app.js?v=1.9.0-beta.11"></script>
   </head>
   <body>
     <header class="app-header">
@@ -337,6 +337,13 @@
                 <option value="dark" selected>黒背景</option>
                 <option value="light">白背景</option>
                 <option value="transparent">透明</option>
+                <optgroup label="フィールド">
+                  <option value="yosei-p1">絶妖星乱舞 P1</option>
+                  <option value="yosei-p2">絶妖星乱舞 P2</option>
+                  <option value="yosei-p3">絶妖星乱舞 P3</option>
+                  <option value="yosei-p4">絶妖星乱舞 P4</option>
+                  <option value="yosei-p5">絶妖星乱舞 P5</option>
+                </optgroup>
               </select>
             </label>
 
@@ -422,6 +429,7 @@
               </defs>
               <rect id="maker-background-rect" width="1024" height="1024" rx="24"></rect>
               <rect id="maker-grid" width="1024" height="1024" rx="24" fill="url(#maker-grid-pattern)"></rect>
+              <image id="maker-field-background-image" x="0" y="0" width="1024" height="1024" preserveAspectRatio="xMidYMid slice" hidden></image>
               <g id="maker-items"></g>
             </svg>
             <p class="maker-hint">素材を追加してドラッグで配置します。完成したら登録画像に追加できます。</p>

@@ -103,6 +103,33 @@ const ROLE_COLORS = {
 };
 const BOSS_MARKER_COLOR = "#ff5a70";
 const DICE_COLORS = ["#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a"];
+const MAKER_FIELD_BACKGROUNDS = {
+  "yosei-p1": {
+    label: "絶妖星乱舞 P1",
+    name: "絶妖星乱舞 P1",
+    src: "./assets/maker/fields/yosei-p1.png",
+  },
+  "yosei-p2": {
+    label: "絶妖星乱舞 P2",
+    name: "絶妖星乱舞 P2",
+    src: "./assets/maker/fields/yosei-p2.png",
+  },
+  "yosei-p3": {
+    label: "絶妖星乱舞 P3",
+    name: "絶妖星乱舞 P3",
+    src: "./assets/maker/fields/yosei-p3.png",
+  },
+  "yosei-p4": {
+    label: "絶妖星乱舞 P4",
+    name: "絶妖星乱舞 P4",
+    src: "./assets/maker/fields/yosei-p4.png",
+  },
+  "yosei-p5": {
+    label: "絶妖星乱舞 P5",
+    name: "絶妖星乱舞 P5",
+    src: "./assets/maker/fields/yosei-p5.png",
+  },
+};
 const FIELD_MARKER_ASSETS = [
   { id: "a", label: "A", color: "#ff5f8f" },
   { id: "b", label: "B", color: "#f3d64e" },
@@ -175,6 +202,7 @@ const state = {
     drag: null,
     color: "#ffd166",
     background: "dark",
+    renderedBackground: null,
     offset: 0,
   },
   settings: {
@@ -311,6 +339,7 @@ function bindElements() {
     "maker-canvas",
     "maker-background-rect",
     "maker-grid",
+    "maker-field-background-image",
     "maker-items",
   ];
 
@@ -1199,21 +1228,72 @@ function renderMaker() {
 
   els.makerDelete.disabled = !state.maker.selectedId;
   els.makerClear.disabled = state.maker.items.length === 0;
-  els.makerSave.disabled = state.maker.items.length === 0;
+  els.makerSave.disabled = state.maker.items.length === 0 && !MAKER_FIELD_BACKGROUNDS[state.maker.background];
   syncMakerSelectionControls();
 }
 
 function applyMakerBackground() {
+  const backgroundId = state.maker.background;
+  const fieldAsset = MAKER_FIELD_BACKGROUNDS[backgroundId] ?? null;
   const fills = {
     dark: "#101010",
     light: "#f4f4f4",
     transparent: "transparent",
   };
 
-  els.makerBackgroundRect.setAttribute("fill", fills[state.maker.background] ?? fills.dark);
+  els.makerBackgroundRect.setAttribute("fill", fieldAsset ? "#7b7b78" : (fills[state.maker.background] ?? fills.dark));
   els.makerBackgroundRect.setAttribute("display", state.maker.background === "transparent" ? "none" : "block");
-  els.makerGrid.setAttribute("display", state.maker.background === "transparent" ? "none" : "block");
+  els.makerGrid.setAttribute("display", state.maker.background === "transparent" || fieldAsset ? "none" : "block");
   els.makerGrid.setAttribute("opacity", state.maker.background === "light" ? "0.24" : "1");
+
+  if (!fieldAsset) {
+    els.makerFieldBackgroundImage.removeAttribute("href");
+    els.makerFieldBackgroundImage.setAttribute("hidden", "");
+    state.maker.renderedBackground = null;
+    return;
+  }
+
+  if (fieldAsset.dataUrl) {
+    setMakerFieldBackgroundImage(fieldAsset.dataUrl, state.maker.background);
+    return;
+  }
+
+  if (state.maker.renderedBackground === backgroundId) {
+    return;
+  }
+
+  state.maker.renderedBackground = backgroundId;
+  els.makerFieldBackgroundImage.setAttribute("hidden", "");
+  loadMakerAssetDataUrl(fieldAsset)
+    .then((href) => {
+      if (state.maker.background !== backgroundId) {
+        return;
+      }
+      setMakerFieldBackgroundImage(href, backgroundId);
+    })
+    .catch((error) => {
+      console.error(error);
+      if (state.maker.background === backgroundId) {
+        state.maker.renderedBackground = null;
+        setStatus(`${fieldAsset.label} のフィールド画像を読み込めませんでした。`, true);
+      }
+    });
+}
+
+function setMakerFieldBackgroundImage(href, backgroundId) {
+  els.makerFieldBackgroundImage.setAttribute("href", href);
+  els.makerFieldBackgroundImage.removeAttribute("hidden");
+  state.maker.renderedBackground = backgroundId;
+}
+
+async function ensureMakerFieldBackgroundLoaded() {
+  const fieldAsset = MAKER_FIELD_BACKGROUNDS[state.maker.background] ?? null;
+  if (!fieldAsset) {
+    return;
+  }
+
+  const href = await loadMakerAssetDataUrl(fieldAsset);
+  setMakerFieldBackgroundImage(href, state.maker.background);
 }
 
 function createMakerElement(item) {
@@ -2011,13 +2091,15 @@ function clamp(value, min, max) {
 }
 
 async function saveMakerImage() {
-  if (state.maker.items.length === 0) {
+  const hasFieldBackground = Boolean(MAKER_FIELD_BACKGROUNDS[state.maker.background]);
+  if (state.maker.items.length === 0 && !hasFieldBackground) {
     setStatus("作成する素材を追加してください。", true);
     return;
   }
 
   try {
     setStatus("作成したカンペを画像化しています...");
+    await ensureMakerFieldBackgroundLoaded();
     const blob = await makerSvgToPngBlob();
     const file = new File([blob], createMakerImageFileName(), {
       type: "image/png",
