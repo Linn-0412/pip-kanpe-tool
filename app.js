@@ -1536,17 +1536,17 @@ function appendMakerDice(group, item) {
 function appendMakerHalfRoom(group, item) {
   group.append(
     createSvgElement("rect", {
-      x: -190,
-      y: -118,
-      width: 380,
-      height: 236,
-      rx: 18,
+      x: -132,
+      y: -132,
+      width: 264,
+      height: 264,
+      rx: 10,
       fill: "rgba(18, 20, 20, 0.64)",
       stroke: "rgba(255,255,255,0.42)",
       "stroke-width": 5,
     }),
     createSvgElement("path", {
-      d: "M 0 -118 H 172 Q 190 -118 190 -100 V 100 Q 190 118 172 118 H 0 Z",
+      d: "M 0 -132 H 122 Q 132 -132 132 -122 V 122 Q 132 132 122 132 H 0 Z",
       fill: hexToRgba(item.color, 0.34),
       stroke: item.color,
       "stroke-width": 7,
@@ -1554,15 +1554,15 @@ function appendMakerHalfRoom(group, item) {
     }),
     createSvgElement("line", {
       x1: 0,
-      y1: -118,
+      y1: -132,
       x2: 0,
-      y2: 118,
+      y2: 132,
       stroke: "rgba(255,255,255,0.72)",
       "stroke-width": 5,
       "stroke-dasharray": "14 10",
     }),
     createSvgElement("path", {
-      d: "M 58 -66 L 134 0 L 58 66",
+      d: "M 44 -72 L 112 0 L 44 72",
       fill: "none",
       stroke: item.color,
       "stroke-width": 12,
@@ -1572,10 +1572,10 @@ function appendMakerHalfRoom(group, item) {
     createSvgElement(
       "text",
       {
-        x: -78,
+        x: -66,
         y: 4,
         fill: "#ffffff",
-        "font-size": 36,
+        "font-size": 34,
         "font-weight": 900,
         "text-anchor": "middle",
         "dominant-baseline": "middle",
@@ -1590,10 +1590,10 @@ function appendMakerHalfRoom(group, item) {
     createSvgElement(
       "text",
       {
-        x: 96,
+        x: 66,
         y: 4,
         fill: item.color,
-        "font-size": 42,
+        "font-size": 40,
         "font-weight": 900,
         "text-anchor": "middle",
         "dominant-baseline": "middle",
