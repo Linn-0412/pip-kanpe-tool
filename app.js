@@ -106,6 +106,18 @@ const FIELD_MARKER_ASSETS = [
   { id: "three", label: "3", color: "#6bb7ff" },
   { id: "four", label: "4", color: "#d78bff" },
 ];
+const GIMMICK_ASSETS = [
+  { id: "stack", label: "頭割り", short: "頭", color: "#4db8ff" },
+  { id: "spread", label: "散開", short: "散", color: "#ff6b4a" },
+  { id: "tower", label: "塔", short: "塔", color: "#a78bfa" },
+  { id: "knockback", label: "ノックバック", short: "KB", color: "#ffd166" },
+  { id: "tether", label: "線", short: "線", color: "#55d989" },
+  { id: "cone", label: "扇範囲", short: "扇", color: "#ff8a3d" },
+  { id: "circle-aoe", label: "円範囲", short: "円", color: "#ff5a70" },
+  { id: "donut", label: "ドーナツ", short: "輪", color: "#ff7a45" },
+  { id: "safe", label: "安置", short: "安", color: "#00d1bd" },
+  { id: "eight-spread", label: "8方向散開", short: "8散", color: "#ff6b4a", template: true },
+];
 const JOB_ICON_ASSETS = [
   { id: "tank-role", label: "TANK", name: "Tank", src: "./assets/maker/official/jobs/TankRole.png" },
   { id: "healer-role", label: "HEAL", name: "Healer", src: "./assets/maker/official/jobs/HealerRole.png" },
@@ -268,6 +280,7 @@ function bindElements() {
     "maker-color",
     "maker-text",
     "maker-field-markers",
+    "maker-gimmicks",
     "maker-job-icons",
     "maker-add-text",
     "maker-delete",
@@ -705,6 +718,27 @@ function buildMakerAssetPalette() {
     els.makerFieldMarkers.append(button);
   });
 
+  els.makerGimmicks.textContent = "";
+  GIMMICK_ASSETS.forEach((gimmick) => {
+    const button = document.createElement("button");
+    button.className = `secondary-button maker-gimmick-button${gimmick.template ? " template" : ""}`;
+    button.type = "button";
+    button.title = gimmick.label;
+    button.dataset.makerGimmick = gimmick.id;
+    button.style.setProperty("--gimmick-color", gimmick.color);
+
+    const symbol = document.createElement("span");
+    symbol.className = "maker-gimmick-symbol";
+    symbol.textContent = gimmick.short;
+
+    const label = document.createElement("span");
+    label.className = "maker-gimmick-label";
+    label.textContent = gimmick.label;
+
+    button.append(symbol, label);
+    els.makerGimmicks.append(button);
+  });
+
   els.makerJobIcons.textContent = "";
 
   JOB_ICON_ASSETS.forEach((asset) => {
@@ -748,6 +782,12 @@ async function handleMakerModalClick(event) {
   const markerButton = target.closest("[data-maker-marker]");
   if (markerButton instanceof HTMLButtonElement) {
     addMakerFieldMarker(markerButton.dataset.makerMarker);
+    return;
+  }
+
+  const gimmickButton = target.closest("[data-maker-gimmick]");
+  if (gimmickButton instanceof HTMLButtonElement) {
+    addMakerGimmick(gimmickButton.dataset.makerGimmick);
     return;
   }
 
@@ -836,6 +876,67 @@ function addMakerFieldMarker(markerId) {
 
   state.maker.items = [...state.maker.items, item];
   state.maker.selectedId = item.id;
+  renderMaker();
+}
+
+function addMakerGimmick(gimmickId) {
+  const gimmick = GIMMICK_ASSETS.find((item) => item.id === gimmickId);
+  if (!gimmick) {
+    return;
+  }
+
+  if (gimmick.template) {
+    addMakerGimmickTemplate(gimmick.id);
+    return;
+  }
+
+  const point = getMakerSpawnPoint();
+  const item = {
+    id: createMakerItemId(),
+    type: "gimmick",
+    gimmickId: gimmick.id,
+    label: gimmick.short,
+    color: gimmick.color,
+    x: point.x,
+    y: point.y,
+  };
+
+  state.maker.items = [...state.maker.items, item];
+  state.maker.selectedId = item.id;
+  renderMaker();
+}
+
+function addMakerGimmickTemplate(templateId) {
+  if (templateId !== "eight-spread") {
+    return;
+  }
+
+  const roles = [
+    { label: "MT", x: MAKER_CENTER.x, y: 140, color: "#4db8ff" },
+    { label: "D1", x: MAKER_CENTER.x + 190, y: 200, color: "#ff8a3d" },
+    { label: "H1", x: MAKER_CENTER.x + 285, y: MAKER_CENTER.y, color: "#55d989" },
+    { label: "D2", x: MAKER_CENTER.x + 190, y: 520, color: "#ff8a3d" },
+    { label: "ST", x: MAKER_CENTER.x, y: 580, color: "#4db8ff" },
+    { label: "D3", x: MAKER_CENTER.x - 190, y: 520, color: "#ff8a3d" },
+    { label: "H2", x: MAKER_CENTER.x - 285, y: MAKER_CENTER.y, color: "#55d989" },
+    { label: "D4", x: MAKER_CENTER.x - 190, y: 200, color: "#ff8a3d" },
+  ];
+  const boss = {
+    id: createMakerItemId(),
+    type: "text",
+    label: "BOSS",
+    x: MAKER_CENTER.x,
+    y: MAKER_CENTER.y,
+    color: "#f4f4f4",
+  };
+  const items = roles.map((role) => ({
+    id: createMakerItemId(),
+    type: "label",
+    ...role,
+  }));
+
+  state.maker.items = [...state.maker.items, boss, ...items];
+  state.maker.selectedId = items[items.length - 1]?.id ?? boss.id;
   renderMaker();
 }
 
@@ -1027,6 +1128,8 @@ function createMakerElement(item) {
     appendMakerLabel(group, item);
   } else if (item.type === "field-marker") {
     appendMakerFieldMarker(group, item);
+  } else if (item.type === "gimmick") {
+    appendMakerGimmick(group, item);
   } else if (item.type === "image") {
     appendMakerImage(group, item);
   } else {
@@ -1155,6 +1258,309 @@ function appendMakerFieldMarker(group, item) {
       },
       item.label,
     ),
+  );
+}
+
+function appendMakerGimmick(group, item) {
+  if (item.gimmickId === "cone") {
+    appendMakerCone(group, item);
+    return;
+  }
+  if (item.gimmickId === "circle-aoe") {
+    appendMakerCircleAoe(group, item);
+    return;
+  }
+  if (item.gimmickId === "donut") {
+    appendMakerDonut(group, item);
+    return;
+  }
+  if (item.gimmickId === "tether") {
+    appendMakerTether(group, item);
+    return;
+  }
+  if (item.gimmickId === "knockback") {
+    appendMakerKnockback(group, item);
+    return;
+  }
+  if (item.gimmickId === "tower") {
+    appendMakerTower(group, item);
+    return;
+  }
+  if (item.gimmickId === "safe") {
+    appendMakerSafe(group, item);
+    return;
+  }
+
+  appendMakerGimmickBadge(group, item);
+}
+
+function appendMakerGimmickBadge(group, item) {
+  const isSpread = item.gimmickId === "spread";
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 78,
+      fill: hexToRgba(item.color, 0.2),
+      stroke: item.color,
+      "stroke-width": 8,
+      "stroke-dasharray": isSpread ? "14 10" : "0",
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 4,
+        fill: item.color,
+        "font-size": 46,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+        "stroke-linejoin": "round",
+      },
+      item.label,
+    ),
+  );
+
+  if (isSpread) {
+    [
+      [0, -132, 0, -92],
+      [0, 132, 0, 92],
+      [-132, 0, -92, 0],
+      [132, 0, 92, 0],
+    ].forEach((line) => {
+      group.append(
+        createSvgElement("line", {
+          x1: line[0],
+          y1: line[1],
+          x2: line[2],
+          y2: line[3],
+          stroke: item.color,
+          "stroke-width": 10,
+          "stroke-linecap": "round",
+        }),
+      );
+    });
+  }
+}
+
+function appendMakerTower(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 92,
+      fill: hexToRgba(item.color, 0.18),
+      stroke: item.color,
+      "stroke-width": 8,
+    }),
+    createSvgElement("rect", {
+      x: -36,
+      y: -72,
+      width: 72,
+      height: 144,
+      rx: 12,
+      fill: hexToRgba(item.color, 0.32),
+      stroke: item.color,
+      "stroke-width": 7,
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 5,
+        fill: "#ffffff",
+        "font-size": 42,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.88)",
+        "stroke-width": 8,
+      },
+      item.label,
+    ),
+  );
+}
+
+function appendMakerKnockback(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 34,
+      fill: hexToRgba(item.color, 0.28),
+      stroke: item.color,
+      "stroke-width": 6,
+    }),
+  );
+
+  [
+    [0, -34, 0, -130, "0,-170 -34,-112 34,-112"],
+    [0, 34, 0, 130, "0,170 -34,112 34,112"],
+    [-34, 0, -130, 0, "-170,0 -112,-34 -112,34"],
+    [34, 0, 130, 0, "170,0 112,-34 112,34"],
+  ].forEach((shape) => {
+    group.append(
+      createSvgElement("line", {
+        x1: shape[0],
+        y1: shape[1],
+        x2: shape[2],
+        y2: shape[3],
+        stroke: item.color,
+        "stroke-width": 12,
+        "stroke-linecap": "round",
+      }),
+      createSvgElement("polygon", {
+        points: shape[4],
+        fill: item.color,
+      }),
+    );
+  });
+}
+
+function appendMakerTether(group, item) {
+  group.append(
+    createSvgElement("line", {
+      x1: -145,
+      y1: 0,
+      x2: 145,
+      y2: 0,
+      stroke: item.color,
+      "stroke-width": 18,
+      "stroke-linecap": "round",
+      "stroke-dasharray": "26 16",
+    }),
+    createSvgElement("circle", {
+      cx: -165,
+      cy: 0,
+      r: 34,
+      fill: hexToRgba(item.color, 0.28),
+      stroke: item.color,
+      "stroke-width": 7,
+    }),
+    createSvgElement("circle", {
+      cx: 165,
+      cy: 0,
+      r: 34,
+      fill: hexToRgba(item.color, 0.28),
+      stroke: item.color,
+      "stroke-width": 7,
+    }),
+  );
+}
+
+function appendMakerCone(group, item) {
+  group.append(
+    createSvgElement("path", {
+      d: "M 0 0 L -150 -190 A 250 250 0 0 1 150 -190 Z",
+      fill: hexToRgba(item.color, 0.28),
+      stroke: item.color,
+      "stroke-width": 7,
+      "stroke-linejoin": "round",
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: -86,
+        fill: item.color,
+        "font-size": 46,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+      },
+      item.label,
+    ),
+  );
+}
+
+function appendMakerCircleAoe(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 112,
+      fill: hexToRgba(item.color, 0.24),
+      stroke: item.color,
+      "stroke-width": 9,
+    }),
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 26,
+      fill: item.color,
+      opacity: 0.9,
+    }),
+  );
+}
+
+function appendMakerDonut(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 118,
+      fill: "none",
+      stroke: hexToRgba(item.color, 0.35),
+      "stroke-width": 54,
+    }),
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 56,
+      fill: "none",
+      stroke: item.color,
+      "stroke-width": 7,
+      "stroke-dasharray": "12 10",
+    }),
+    createSvgElement(
+      "text",
+      {
+        x: 0,
+        y: 4,
+        fill: item.color,
+        "font-size": 42,
+        "font-weight": 900,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+        "font-family": '"Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif',
+        "paint-order": "stroke",
+        stroke: "rgba(0,0,0,0.86)",
+        "stroke-width": 8,
+      },
+      item.label,
+    ),
+  );
+}
+
+function appendMakerSafe(group, item) {
+  group.append(
+    createSvgElement("circle", {
+      cx: 0,
+      cy: 0,
+      r: 80,
+      fill: hexToRgba(item.color, 0.16),
+      stroke: item.color,
+      "stroke-width": 8,
+    }),
+    createSvgElement("path", {
+      d: "M -42 2 L -12 34 L 48 -42",
+      fill: "none",
+      stroke: item.color,
+      "stroke-width": 16,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    }),
   );
 }
 

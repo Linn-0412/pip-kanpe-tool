@@ -958,7 +958,8 @@ body.modal-open {
 
 .marker-grid,
 .role-grid,
-.job-icon-grid {
+.job-icon-grid,
+.gimmick-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -998,6 +999,41 @@ body.modal-open {
   box-shadow:
     0 0 0 2px rgba(255, 255, 255, 0.08),
     0 0 10px color-mix(in srgb, var(--marker-color) 58%, transparent);
+}
+
+.maker-gimmick-button {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  min-height: 4.1rem;
+  padding: 0.4rem 0.25rem;
+  font-size: 0.72rem;
+}
+
+.maker-gimmick-button.template {
+  border-color: rgba(255, 209, 102, 0.4);
+}
+
+.maker-gimmick-symbol {
+  display: grid;
+  place-items: center;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  padding: 0 0.25rem;
+  border: 2px solid var(--gimmick-color);
+  border-radius: 999px;
+  color: var(--gimmick-color);
+  background: color-mix(in srgb, var(--gimmick-color) 14%, #141414);
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gimmick-color) 45%, transparent);
+}
+
+.maker-gimmick-label {
+  color: var(--muted);
+  line-height: 1.2;
 }
 
 .maker-job-button {
