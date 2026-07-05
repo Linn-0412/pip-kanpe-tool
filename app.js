@@ -93,8 +93,8 @@ const EXTENSION_GUIDES = {
 const EYE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
 const EYE_OFF_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.5 9.5 0 0 1 12 4c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.16 3.19M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
 const SVG_NS = "http://www.w3.org/2000/svg";
-const MAKER_WIDTH = 1280;
-const MAKER_HEIGHT = 720;
+const MAKER_WIDTH = 1024;
+const MAKER_HEIGHT = 1024;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
 const ROLE_COLORS = {
   tank: "#4db8ff",
@@ -949,15 +949,17 @@ function addMakerGimmickTemplate(templateId) {
     return;
   }
 
+  const axisOffset = 370;
+  const diagonalOffset = 250;
   const roles = [
-    { label: "MT", x: MAKER_CENTER.x, y: 140 },
-    { label: "D1", x: MAKER_CENTER.x + 190, y: 200 },
-    { label: "H1", x: MAKER_CENTER.x + 285, y: MAKER_CENTER.y },
-    { label: "D2", x: MAKER_CENTER.x + 190, y: 520 },
-    { label: "ST", x: MAKER_CENTER.x, y: 580 },
-    { label: "D3", x: MAKER_CENTER.x - 190, y: 520 },
-    { label: "H2", x: MAKER_CENTER.x - 285, y: MAKER_CENTER.y },
-    { label: "D4", x: MAKER_CENTER.x - 190, y: 200 },
+    { label: "MT", x: MAKER_CENTER.x, y: MAKER_CENTER.y - axisOffset },
+    { label: "D1", x: MAKER_CENTER.x + diagonalOffset, y: MAKER_CENTER.y - diagonalOffset },
+    { label: "H1", x: MAKER_CENTER.x + axisOffset, y: MAKER_CENTER.y },
+    { label: "D2", x: MAKER_CENTER.x + diagonalOffset, y: MAKER_CENTER.y + diagonalOffset },
+    { label: "ST", x: MAKER_CENTER.x, y: MAKER_CENTER.y + axisOffset },
+    { label: "D3", x: MAKER_CENTER.x - diagonalOffset, y: MAKER_CENTER.y + diagonalOffset },
+    { label: "H2", x: MAKER_CENTER.x - axisOffset, y: MAKER_CENTER.y },
+    { label: "D4", x: MAKER_CENTER.x - diagonalOffset, y: MAKER_CENTER.y - diagonalOffset },
   ];
   const boss = {
     id: createMakerItemId(),

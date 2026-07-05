@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.9">
-    <script type="module" src="./app.js?v=1.9.0-beta.9"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.10">
+    <script type="module" src="./app.js?v=1.9.0-beta.10"></script>
   </head>
   <body>
     <header class="app-header">
@@ -414,14 +414,14 @@
           </aside>
 
           <div class="maker-stage-wrap">
-            <svg id="maker-canvas" class="maker-canvas" viewBox="0 0 1280 720" role="img" aria-label="カンペ作成キャンバス" tabindex="0">
+            <svg id="maker-canvas" class="maker-canvas" viewBox="0 0 1024 1024" role="img" aria-label="カンペ作成キャンバス" tabindex="0">
               <defs>
                 <pattern id="maker-grid-pattern" width="80" height="80" patternUnits="userSpaceOnUse">
                   <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
                 </pattern>
               </defs>
-              <rect id="maker-background-rect" width="1280" height="720" rx="24"></rect>
-              <rect id="maker-grid" width="1280" height="720" rx="24" fill="url(#maker-grid-pattern)"></rect>
+              <rect id="maker-background-rect" width="1024" height="1024" rx="24"></rect>
+              <rect id="maker-grid" width="1024" height="1024" rx="24" fill="url(#maker-grid-pattern)"></rect>
               <g id="maker-items"></g>
             </svg>
             <p class="maker-hint">素材を追加してドラッグで配置します。完成したら登録画像に追加できます。</p>

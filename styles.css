@@ -1113,14 +1113,15 @@ body.modal-open {
 .maker-stage-wrap {
   display: grid;
   align-content: start;
+  justify-items: center;
   gap: 0.65rem;
   min-width: 0;
 }
 
 .maker-canvas {
   display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  width: min(100%, 42rem);
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1160,6 +1161,7 @@ body.modal-open {
 }
 
 .maker-hint {
+  justify-self: stretch;
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
