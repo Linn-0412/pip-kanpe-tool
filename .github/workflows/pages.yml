@@ -77,6 +77,12 @@ jobs:
             cp "stable-source/$file" "site/$file"
             cp "beta-source/$file" "site/beta/$file"
           done
+          if [ -d stable-source/assets ]; then
+            cp -R stable-source/assets site/assets
+          fi
+          if [ -d beta-source/assets ]; then
+            cp -R beta-source/assets site/beta/assets
+          fi
           cp stable-source/.nojekyll site/
           cp beta-source/.nojekyll site/beta/
 

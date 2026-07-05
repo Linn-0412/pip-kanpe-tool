@@ -96,6 +96,32 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const MAKER_WIDTH = 1280;
 const MAKER_HEIGHT = 720;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
+const JOB_ICON_ASSETS = [
+  { id: "tank-role", label: "TANK", name: "Tank", src: "./assets/maker/official/jobs/TankRole.png" },
+  { id: "healer-role", label: "HEAL", name: "Healer", src: "./assets/maker/official/jobs/HealerRole.png" },
+  { id: "dps-role", label: "DPS", name: "DPS", src: "./assets/maker/official/jobs/DPSRole.png" },
+  { id: "paladin", label: "PLD", name: "Paladin", src: "./assets/maker/official/jobs/Paladin.png" },
+  { id: "warrior", label: "WAR", name: "Warrior", src: "./assets/maker/official/jobs/Warrior.png" },
+  { id: "dark-knight", label: "DRK", name: "Dark Knight", src: "./assets/maker/official/jobs/DarkKnight.png" },
+  { id: "gunbreaker", label: "GNB", name: "Gunbreaker", src: "./assets/maker/official/jobs/Gunbreaker.png" },
+  { id: "white-mage", label: "WHM", name: "White Mage", src: "./assets/maker/official/jobs/WhiteMage.png" },
+  { id: "scholar", label: "SCH", name: "Scholar", src: "./assets/maker/official/jobs/Scholar.png" },
+  { id: "astrologian", label: "AST", name: "Astrologian", src: "./assets/maker/official/jobs/Astrologian.png" },
+  { id: "sage", label: "SGE", name: "Sage", src: "./assets/maker/official/jobs/Sage.png" },
+  { id: "monk", label: "MNK", name: "Monk", src: "./assets/maker/official/jobs/Monk.png" },
+  { id: "dragoon", label: "DRG", name: "Dragoon", src: "./assets/maker/official/jobs/Dragoon.png" },
+  { id: "ninja", label: "NIN", name: "Ninja", src: "./assets/maker/official/jobs/Ninja.png" },
+  { id: "samurai", label: "SAM", name: "Samurai", src: "./assets/maker/official/jobs/Samurai.png" },
+  { id: "reaper", label: "RPR", name: "Reaper", src: "./assets/maker/official/jobs/Reaper.png" },
+  { id: "viper", label: "VPR", name: "Viper", src: "./assets/maker/official/jobs/Viper.png" },
+  { id: "bard", label: "BRD", name: "Bard", src: "./assets/maker/official/jobs/Bard.png" },
+  { id: "machinist", label: "MCH", name: "Machinist", src: "./assets/maker/official/jobs/Machinist.png" },
+  { id: "dancer", label: "DNC", name: "Dancer", src: "./assets/maker/official/jobs/Dancer.png" },
+  { id: "black-mage", label: "BLM", name: "Black Mage", src: "./assets/maker/official/jobs/BlackMage.png" },
+  { id: "summoner", label: "SMN", name: "Summoner", src: "./assets/maker/official/jobs/Summoner.png" },
+  { id: "red-mage", label: "RDM", name: "Red Mage", src: "./assets/maker/official/jobs/RedMage.png" },
+  { id: "pictomancer", label: "PCT", name: "Pictomancer", src: "./assets/maker/official/jobs/Pictomancer.png" },
+];
 
 // メモリ上の唯一の状態。IndexedDBの画像本体、localStorageの設定、PiP小窓をここで束ねる。
 const state = {
@@ -139,6 +165,7 @@ window.addEventListener("DOMContentLoaded", init);
 async function init() {
   bindElements();
   bindEvents();
+  buildMakerAssetPalette();
   applyBrowserGuide();
   updateSupportBadge();
   updateVariantBadge();
@@ -230,6 +257,7 @@ function bindElements() {
     "maker-background",
     "maker-color",
     "maker-text",
+    "maker-job-icons",
     "maker-add-text",
     "maker-delete",
     "maker-clear",
@@ -648,7 +676,30 @@ function closeMakerModal() {
   els.openMaker.focus();
 }
 
-function handleMakerModalClick(event) {
+function buildMakerAssetPalette() {
+  els.makerJobIcons.textContent = "";
+
+  JOB_ICON_ASSETS.forEach((asset) => {
+    const button = document.createElement("button");
+    button.className = "secondary-button maker-job-button";
+    button.type = "button";
+    button.title = asset.name;
+    button.dataset.makerJob = asset.id;
+
+    const image = document.createElement("img");
+    image.src = asset.src;
+    image.alt = "";
+    image.loading = "lazy";
+
+    const label = document.createElement("span");
+    label.textContent = asset.label;
+
+    button.append(image, label);
+    els.makerJobIcons.append(button);
+  });
+}
+
+async function handleMakerModalClick(event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) {
     return;
@@ -663,6 +714,12 @@ function handleMakerModalClick(event) {
   const labelButton = target.closest("[data-maker-label]");
   if (labelButton instanceof HTMLButtonElement) {
     addMakerLabel(labelButton.dataset.makerLabel);
+    return;
+  }
+
+  const jobButton = target.closest("[data-maker-job]");
+  if (jobButton instanceof HTMLButtonElement) {
+    await addMakerJobIcon(jobButton.dataset.makerJob);
     return;
   }
 
@@ -725,6 +782,47 @@ function addMakerLabel(label) {
   state.maker.items = [...state.maker.items, item];
   state.maker.selectedId = item.id;
   renderMaker();
+}
+
+async function addMakerJobIcon(assetId) {
+  const asset = JOB_ICON_ASSETS.find((item) => item.id === assetId);
+  if (!asset) {
+    return;
+  }
+
+  try {
+    const href = await loadMakerAssetDataUrl(asset);
+    const point = getMakerSpawnPoint();
+    const item = {
+      id: createMakerItemId(),
+      type: "image",
+      label: asset.label,
+      x: point.x,
+      y: point.y,
+      href,
+    };
+
+    state.maker.items = [...state.maker.items, item];
+    state.maker.selectedId = item.id;
+    renderMaker();
+  } catch (error) {
+    console.error(error);
+    setStatus(`${asset.name} の素材を読み込めませんでした。`, true);
+  }
+}
+
+async function loadMakerAssetDataUrl(asset) {
+  if (asset.dataUrl) {
+    return asset.dataUrl;
+  }
+
+  const response = await fetch(asset.src);
+  if (!response.ok) {
+    throw new Error(`Asset load failed: ${asset.src}`);
+  }
+
+  asset.dataUrl = await blobToDataUrl(await response.blob());
+  return asset.dataUrl;
 }
 
 function addMakerText() {
@@ -872,6 +970,8 @@ function createMakerElement(item) {
     appendMakerArrow(group, item);
   } else if (item.type === "label") {
     appendMakerLabel(group, item);
+  } else if (item.type === "image") {
+    appendMakerImage(group, item);
   } else {
     appendMakerText(group, item);
   }
@@ -959,6 +1059,19 @@ function appendMakerLabel(group, item) {
       },
       item.label,
     ),
+  );
+}
+
+function appendMakerImage(group, item) {
+  group.append(
+    createSvgElement("image", {
+      href: item.href,
+      x: -54,
+      y: -54,
+      width: 108,
+      height: 108,
+      preserveAspectRatio: "xMidYMid meet",
+    }),
   );
 }
 
