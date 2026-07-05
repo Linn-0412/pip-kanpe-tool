@@ -148,6 +148,7 @@ async function init() {
 function bindElements() {
   const ids = [
     "variant-badge",
+    "beta-feedback",
     "support-badge",
     "open-guide",
     "open-pip",
@@ -607,16 +608,21 @@ function updateSupportBadge() {
 
 // β版URLでは正式版と別の保存領域を使うことを画面上でも明示する。
 function updateVariantBadge() {
-  if (!els.variantBadge) {
-    return;
+  if (els.betaFeedback) {
+    els.betaFeedback.hidden = !IS_BETA;
   }
 
-  els.variantBadge.hidden = !IS_BETA;
+  if (els.variantBadge) {
+    els.variantBadge.hidden = !IS_BETA;
+  }
+
   if (!IS_BETA) {
     return;
   }
 
-  els.variantBadge.textContent = "β版";
+  if (els.variantBadge) {
+    els.variantBadge.textContent = "β版";
+  }
   if (!document.title.startsWith("β版 ")) {
     document.title = `β版 ${document.title}`;
   }

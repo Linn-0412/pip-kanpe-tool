@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.8.0-beta.2">
-    <script type="module" src="./app.js?v=1.8.0-beta.2"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.8.0">
+    <script type="module" src="./app.js?v=1.8.0"></script>
   </head>
   <body>
     <header class="app-header">
@@ -42,17 +42,20 @@
           </label>
         </div>
 
-        <div class="deck-tools" aria-label="カンペセット操作">
-          <div>
-            <strong>カンペセット</strong>
-            <span>登録画像、並び順、グループ、PiP表示設定をまとめて保存・読み込みできます。</span>
+        <details class="group-settings deck-tools" aria-label="カンペセット操作">
+          <summary>カンペセット</summary>
+          <div class="group-settings-body deck-tools-body">
+            <div>
+              <strong>カンペセット</strong>
+              <span>登録画像、並び順、グループ、PiP表示設定をまとめて保存・読み込みできます。</span>
+            </div>
+            <div class="deck-tool-actions">
+              <button id="export-deck" class="secondary-button" type="button">エクスポート</button>
+              <button id="import-deck" class="secondary-button" type="button">インポート</button>
+              <input id="deck-import-input" type="file" accept=".pipkanpe,application/json" hidden>
+            </div>
           </div>
-          <div class="deck-tool-actions">
-            <button id="export-deck" class="secondary-button" type="button">エクスポート</button>
-            <button id="import-deck" class="secondary-button" type="button">インポート</button>
-            <input id="deck-import-input" type="file" accept=".pipkanpe,application/json" hidden>
-          </div>
-        </div>
+        </details>
 
         <div class="group-panel" aria-label="グループ管理">
           <label class="group-field">
@@ -76,7 +79,7 @@
           </details>
         </div>
 
-        <div class="beta-feedback" aria-label="β版フィードバック">
+        <div id="beta-feedback" class="beta-feedback" aria-label="β版フィードバック" hidden>
           <div>
             <strong>β版フィードバック</strong>
             <span>気づいたことや不具合は、GitHub IssueまたはOFUSEコメントへお願いします。</span>
