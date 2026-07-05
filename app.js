@@ -101,7 +101,7 @@ const ROLE_COLORS = {
   healer: "#55d989",
   dps: "#ff5a70",
 };
-const DICE_COLORS = ["#ff5a70", "#f3d64e", "#6bb7ff", "#d78bff", "#ff5a70", "#f3d64e", "#6bb7ff", "#d78bff"];
+const DICE_COLORS = ["#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a", "#4db8ff", "#ff6b4a"];
 const FIELD_MARKER_ASSETS = [
   { id: "a", label: "A", color: "#ff5f8f" },
   { id: "b", label: "B", color: "#f3d64e" },
