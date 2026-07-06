@@ -97,7 +97,7 @@ const MAKER_WIDTH = 1024;
 const MAKER_HEIGHT = 1024;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
 const MAKER_AXIS_SCALE_MIN = 0.25;
-const MAKER_AXIS_SCALE_MAX = 5;
+const MAKER_AXIS_SCALE_MAX = 10;
 const ROLE_COLORS = {
   tank: "#4db8ff",
   healer: "#55d989",
