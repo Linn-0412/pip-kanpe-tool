@@ -96,6 +96,8 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const MAKER_WIDTH = 1024;
 const MAKER_HEIGHT = 1024;
 const MAKER_CENTER = { x: MAKER_WIDTH / 2, y: MAKER_HEIGHT / 2 };
+const MAKER_AXIS_SCALE_MIN = 0.25;
+const MAKER_AXIS_SCALE_MAX = 5;
 const ROLE_COLORS = {
   tank: "#4db8ff",
   healer: "#55d989",
@@ -325,6 +327,10 @@ function bindElements() {
     "maker-color",
     "maker-size",
     "maker-size-value",
+    "maker-width-scale",
+    "maker-width-value",
+    "maker-height-scale",
+    "maker-height-value",
     "maker-rotation",
     "maker-rotation-value",
     "maker-reset-transform",
@@ -435,6 +441,8 @@ function bindEvents() {
     recolorSelectedMakerItem();
   });
   els.makerSize.addEventListener("input", updateSelectedMakerTransform);
+  els.makerWidthScale.addEventListener("input", updateSelectedMakerTransform);
+  els.makerHeightScale.addEventListener("input", updateSelectedMakerTransform);
   els.makerRotation.addEventListener("input", updateSelectedMakerTransform);
   els.makerResetTransform.addEventListener("click", resetSelectedMakerTransform);
   els.makerAddText.addEventListener("click", addMakerText);
@@ -863,7 +871,7 @@ function handleMakerKeydown(event) {
   }
 
   if (event.key === "Delete" || event.key === "Backspace") {
-    if (event.target instanceof Element && event.target.matches("input, textarea")) {
+    if (event.target instanceof Element && event.target.matches("input, select, textarea, [contenteditable='true']")) {
       return;
     }
 
@@ -1129,6 +1137,20 @@ function getMakerItemScale(item) {
   return Number.isFinite(scale) ? clamp(scale, 0.5, 1.8) : 1;
 }
 
+function getMakerItemAxisScale(item, axis) {
+  const key = axis === "y" ? "scaleY" : "scaleX";
+  const scale = Number(item?.[key]);
+  return Number.isFinite(scale) ? clamp(scale, MAKER_AXIS_SCALE_MIN, MAKER_AXIS_SCALE_MAX) : 1;
+}
+
+function getMakerItemEffectiveScaleX(item) {
+  return getMakerItemScale(item) * getMakerItemAxisScale(item, "x");
+}
+
+function getMakerItemEffectiveScaleY(item) {
+  return getMakerItemScale(item) * getMakerItemAxisScale(item, "y");
+}
+
 function getMakerItemRotation(item) {
   const rotation = Number(item?.rotation);
   return Number.isFinite(rotation) ? rotation : 0;
@@ -1142,6 +1164,8 @@ function updateSelectedMakerTransform() {
   }
 
   selected.scale = Number(els.makerSize.value) / 100;
+  selected.scaleX = Number(els.makerWidthScale.value) / 100;
+  selected.scaleY = Number(els.makerHeightScale.value) / 100;
   selected.rotation = Number(els.makerRotation.value);
   renderMaker();
 }
@@ -1154,26 +1178,36 @@ function resetSelectedMakerTransform() {
   }
 
   selected.scale = 1;
+  selected.scaleX = 1;
+  selected.scaleY = 1;
   selected.rotation = 0;
   renderMaker();
 }
 
 function syncMakerSelectionControls() {
-  if (!els.makerSize || !els.makerRotation) {
+  if (!els.makerSize || !els.makerWidthScale || !els.makerHeightScale || !els.makerRotation) {
     return;
   }
 
   const selected = getSelectedMakerItem();
   const hasSelection = Boolean(selected);
   const scalePercent = selected ? Math.round(getMakerItemScale(selected) * 100) : 100;
+  const widthPercent = selected ? Math.round(getMakerItemAxisScale(selected, "x") * 100) : 100;
+  const heightPercent = selected ? Math.round(getMakerItemAxisScale(selected, "y") * 100) : 100;
   const rotation = selected ? Math.round(getMakerItemRotation(selected)) : 0;
 
   els.makerSize.disabled = !hasSelection;
+  els.makerWidthScale.disabled = !hasSelection;
+  els.makerHeightScale.disabled = !hasSelection;
   els.makerRotation.disabled = !hasSelection;
   els.makerResetTransform.disabled = !hasSelection;
   els.makerSize.value = String(scalePercent);
+  els.makerWidthScale.value = String(widthPercent);
+  els.makerHeightScale.value = String(heightPercent);
   els.makerRotation.value = String(rotation);
   els.makerSizeValue.textContent = `${scalePercent}%`;
+  els.makerWidthValue.textContent = `${widthPercent}%`;
+  els.makerHeightValue.textContent = `${heightPercent}%`;
   els.makerRotationValue.textContent = `${rotation}°`;
 }
 
@@ -1299,7 +1333,7 @@ async function ensureMakerFieldBackgroundLoaded() {
 function createMakerElement(item) {
   const group = createSvgElement("g", {
     class: `maker-item${item.id === state.maker.selectedId ? " selected" : ""}`,
-    transform: `translate(${item.x} ${item.y}) rotate(${getMakerItemRotation(item)}) scale(${getMakerItemScale(item)})`,
+    transform: `translate(${item.x} ${item.y}) rotate(${getMakerItemRotation(item)}) scale(${getMakerItemEffectiveScaleX(item)} ${getMakerItemEffectiveScaleY(item)})`,
     "data-maker-id": item.id,
   });
 
@@ -1355,7 +1389,115 @@ function createMakerElement(item) {
     appendMakerText(group, item);
   }
 
+  if (item.id === state.maker.selectedId) {
+    appendMakerSelectionHandles(group, item);
+  }
+
   return group;
+}
+
+function appendMakerSelectionHandles(group, item) {
+  const bounds = getMakerBaseBounds(item);
+  group.append(
+    createSvgElement("rect", {
+      class: "maker-selection-box",
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      rx: 10,
+      fill: "none",
+      stroke: "rgba(0, 209, 189, 0.88)",
+      "stroke-width": 4,
+      "stroke-dasharray": "12 10",
+      "vector-effect": "non-scaling-stroke",
+      "pointer-events": "none",
+    }),
+    createSvgElement("circle", {
+      class: "maker-resize-handle",
+      "data-maker-handle": "resize",
+      cx: bounds.x + bounds.width,
+      cy: bounds.y + bounds.height,
+      r: 18,
+      fill: "#00d1bd",
+      stroke: "#061c1a",
+      "stroke-width": 5,
+      "vector-effect": "non-scaling-stroke",
+    }),
+  );
+}
+
+function getMakerBaseBounds(item) {
+  if (item.type === "circle") {
+    return getCenteredBounds(176, 176);
+  }
+  if (item.type === "rect") {
+    return { x: -130, y: -76, width: 260, height: 152 };
+  }
+  if (item.type === "line") {
+    return { x: -150, y: -16, width: 300, height: 32 };
+  }
+  if (item.type === "boss") {
+    return getCenteredBounds(180, 180);
+  }
+  if (item.type === "arrow") {
+    return item.direction === "left" || item.direction === "right"
+      ? { x: -156, y: -70, width: 312, height: 140 }
+      : { x: -70, y: -156, width: 140, height: 312 };
+  }
+  if (item.type === "label") {
+    return String(item.label ?? "").length > 1 ? { x: -74, y: -40, width: 148, height: 80 } : getCenteredBounds(100, 100);
+  }
+  if (item.type === "field-marker") {
+    return getCenteredBounds(116, 116);
+  }
+  if (item.type === "image") {
+    return getCenteredBounds(108, 108);
+  }
+  if (item.type === "text") {
+    const labelWidth = clamp(String(item.label ?? "").length * 42, 120, 520);
+    return getCenteredBounds(labelWidth, 108);
+  }
+  if (item.type === "gimmick") {
+    return getMakerGimmickBounds(item);
+  }
+
+  return getCenteredBounds(160, 160);
+}
+
+function getMakerGimmickBounds(item) {
+  if (item.gimmickId?.startsWith("dice-")) {
+    return getCenteredBounds(144, 144);
+  }
+  if (item.gimmickId === "cone") {
+    return { x: -150, y: -190, width: 300, height: 190 };
+  }
+  if (item.gimmickId === "circle-aoe" || item.gimmickId === "donut") {
+    return getCenteredBounds(250, 250);
+  }
+  if (item.gimmickId === "tether") {
+    return { x: -200, y: -40, width: 400, height: 80 };
+  }
+  if (item.gimmickId === "knockback") {
+    return getCenteredBounds(360, 360);
+  }
+  if (item.gimmickId === "tower") {
+    return getCenteredBounds(190, 190);
+  }
+  if (item.gimmickId === "half-room") {
+    return getCenteredBounds(264, 264);
+  }
+
+  return getCenteredBounds(280, 280);
+}
+
+function getCenteredBounds(width, height) {
+  return {
+    x: -width / 2,
+    y: -height / 2,
+    width,
+    height,
+  };
 }
 
 function appendMakerArrow(group, item) {
@@ -2025,7 +2167,9 @@ function handleMakerPointerDown(event) {
     return;
   }
 
-  const target = event.target instanceof Element ? event.target.closest(".maker-item") : null;
+  const targetElement = event.target instanceof Element ? event.target : null;
+  const handle = targetElement?.closest("[data-maker-handle]") ?? null;
+  const target = handle ? handle.closest(".maker-item") : targetElement?.closest(".maker-item");
   if (!target) {
     state.maker.selectedId = null;
     renderMaker();
@@ -2040,6 +2184,7 @@ function handleMakerPointerDown(event) {
   const point = getMakerPointerPoint(event);
   state.maker.selectedId = item.id;
   state.maker.drag = {
+    type: handle ? "resize" : "move",
     id: item.id,
     offsetX: point.x - item.x,
     offsetY: point.y - item.y,
@@ -2061,6 +2206,12 @@ function handleMakerPointerMove(event) {
   }
 
   const point = getMakerPointerPoint(event);
+  if (drag.type === "resize") {
+    resizeMakerItemWithPointer(item, point);
+    renderMaker();
+    return;
+  }
+
   item.x = clamp(point.x - drag.offsetX, 40, MAKER_WIDTH - 40);
   item.y = clamp(point.y - drag.offsetY, 40, MAKER_HEIGHT - 40);
   renderMaker();
@@ -2075,6 +2226,32 @@ function getMakerPointerPoint(event) {
   return {
     x: ((event.clientX - rect.left) / rect.width) * MAKER_WIDTH,
     y: ((event.clientY - rect.top) / rect.height) * MAKER_HEIGHT,
+  };
+}
+
+function resizeMakerItemWithPointer(item, point) {
+  const bounds = getMakerBaseBounds(item);
+  const centerX = bounds.x + bounds.width / 2;
+  const centerY = bounds.y + bounds.height / 2;
+  const local = getMakerUnscaledLocalPoint(item, point);
+  const scaleX = Math.abs(local.x - centerX) / Math.max(bounds.width / 2, 1);
+  const scaleY = Math.abs(local.y - centerY) / Math.max(bounds.height / 2, 1);
+
+  item.scaleX = clamp(scaleX, MAKER_AXIS_SCALE_MIN, MAKER_AXIS_SCALE_MAX);
+  item.scaleY = clamp(scaleY, MAKER_AXIS_SCALE_MIN, MAKER_AXIS_SCALE_MAX);
+}
+
+function getMakerUnscaledLocalPoint(item, point) {
+  const angle = (-getMakerItemRotation(item) * Math.PI) / 180;
+  const dx = point.x - item.x;
+  const dy = point.y - item.y;
+  const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+  const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+  const scale = getMakerItemScale(item);
+
+  return {
+    x: rotatedX / scale,
+    y: rotatedY / scale,
   };
 }
 
@@ -2124,6 +2301,7 @@ function makerSvgToPngBlob() {
     svg.setAttribute("width", MAKER_WIDTH);
     svg.setAttribute("height", MAKER_HEIGHT);
     svg.querySelectorAll(".maker-item").forEach((item) => item.classList.remove("selected"));
+    svg.querySelectorAll(".maker-selection-box, .maker-resize-handle").forEach((item) => item.remove());
 
     const svgText = new XMLSerializer().serializeToString(svg);
     const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });

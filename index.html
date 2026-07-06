@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#111111">
     <title>PiP カンペツール</title>
     <link rel="icon" href="./favicon.jpg" type="image/jpeg">
-    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.11">
-    <script type="module" src="./app.js?v=1.9.0-beta.11"></script>
+    <link rel="stylesheet" href="./styles.css?v=1.9.0-beta.12">
+    <script type="module" src="./app.js?v=1.9.0-beta.12"></script>
   </head>
   <body>
     <header class="app-header">
@@ -356,6 +356,14 @@
               <label class="maker-field">
                 <span>大きさ <output id="maker-size-value" for="maker-size">100%</output></span>
                 <input id="maker-size" type="range" min="50" max="180" step="5" value="100" disabled>
+              </label>
+              <label class="maker-field">
+                <span>横幅 <output id="maker-width-value" for="maker-width-scale">100%</output></span>
+                <input id="maker-width-scale" type="range" min="25" max="500" step="5" value="100" disabled>
+              </label>
+              <label class="maker-field">
+                <span>縦幅 <output id="maker-height-value" for="maker-height-scale">100%</output></span>
+                <input id="maker-height-scale" type="range" min="25" max="500" step="5" value="100" disabled>
               </label>
               <label class="maker-field">
                 <span>向き <output id="maker-rotation-value" for="maker-rotation">0°</output></span>

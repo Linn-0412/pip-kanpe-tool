@@ -1151,6 +1151,15 @@ body.modal-open {
   filter: drop-shadow(0 0 10px rgba(0, 209, 189, 0.9));
 }
 
+.maker-selection-box {
+  pointer-events: none;
+}
+
+.maker-resize-handle {
+  cursor: nwse-resize;
+  pointer-events: all;
+}
+
 .maker-item text {
   font-family: "Segoe UI", "Yu Gothic UI", "Yu Gothic", sans-serif;
   paint-order: stroke;
