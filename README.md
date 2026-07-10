@@ -9,6 +9,13 @@ GitHub Pagesで公開する、画像カンペ用の静的Webアプリです。
 - リポジトリ: https://github.com/Linn-0412/pip-kanpe-tool
 - 開発支援: https://ofuse.me/linn0412
 
+## 仕様書
+
+今後はデスクトップ版を主系統として、仕様書はデスクトップ版リポジトリへ集約します。
+
+- Web版からの仕様書入口: [docs/README.md](./docs/README.md)
+- 仕様書本体: https://github.com/Linn-0412/pip-kanpe-tool-desktop/tree/main/docs
+
 ## 機能
 
 - 画像を最大80枚まで登録
